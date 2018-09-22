@@ -142,36 +142,36 @@ for npc in dbResponse:
     }
 
 log("NPCs loaded: " + str(len(npcs)), "info")
-	
+    
 # Deepcopy npcs fetched from a database into a master template
 npcsTemplate = deepcopy(npcs)
 
 # List NPC dictionary for debigging purposes
 # for x in npcs:
-	# print (x)
-	# for y in npcs[x]:
-		# print (y,':',npcs[x][y])
+    # print (x)
+    # for y in npcs[x]:
+        # print (y,':',npcs[x][y])
 
 # Fetch tbl_ENV and populate env[]
 cursor.execute("SELECT * FROM tbl_ENV")
 dbResponse = cursor.fetchall()
 
 for en in dbResponse:
-	env[en[0]] = {
-	'name': en[1],
-	'room': en[2],
-	'vocabulary': en[3].split('|'),
-	'talkDelay': en[4],
-	'timeTalked': int(time.time()),
+    env[en[0]] = {
+    'name': en[1],
+    'room': en[2],
+    'vocabulary': en[3].split('|'),
+    'talkDelay': en[4],
+    'timeTalked': int(time.time()),
         'lastSaid': 0,
-	}
+    }
 
 log("Environment Actors loaded: " + str(len(env)), "info")
-	# List ENV dictionary for debigging purposes
-	# for x in env:
-		# print (x)
-		# for y in env[x]:
-			# print (y,':',env[x][y])
+    # List ENV dictionary for debigging purposes
+    # for x in env:
+        # print (x)
+        # for y in env[x]:
+            # print (y,':',env[x][y])
 
 # Fetch tbl_Items and populate itemsDB[]
 cursor.execute("SELECT * FROM tbl_Items")
@@ -214,9 +214,9 @@ for item in dbResponse:
 log("Items loaded: " + str(len(itemsDB)), "info")
 # List items DB for debugging purposes
 # for x in itemsDB:
-	# print (x)
-	# for y in itemsDB[x]:
-		# print(y,':',itemsDB[x][y])
+    # print (x)
+    # for y in itemsDB[x]:
+        # print(y,':',itemsDB[x][y])
 
 # Put some items in the world for testing and debugging
 itemsInWorld[getFreeKey(itemsInWorld)] = { 'id': 200001, 'room': '$rid=1$', 'whenDropped': 1533133523, 'lifespan': 90000000, 'owner': 1}
@@ -225,10 +225,10 @@ itemsInWorld[getFreeKey(itemsInWorld)] = { 'id': 200001, 'room': '$rid=1$', 'whe
 
 # List items in world for debugging purposes
 # for x in itemsInWorld:
-	# print (x)
-	# for y in itemsInWorld[x]:
-		# print(y,':',itemsInWorld[x][y])
-		
+    # print (x)
+    # for y in itemsInWorld[x]:
+        # print(y,':',itemsInWorld[x][y])
+        
 # Close a database connection, all data has been fetched to memory
 log("Closing database connection", "info")
 cursor.close()
@@ -258,77 +258,93 @@ while True:
     now = int(time.time())
     if int(now >= lastStateSave + stateSaveInterval):
         # print("[info] Saving player state")
-		
-		# State Save logic Start
+        
+        # State Save logic Start
         cnxn = pymysql.connect(host=DBhost, port=DBport, user=DBuser, passwd=DBpasswd, db=DBdatabase)
         cursor = cnxn.cursor()
         for (pid, pl) in list(players.items()):
-            if players[pid]['authenticated'] is not None:
-                # print('Saving' + players[pid]['name'])
-                cursor.execute("UPDATE tbl_Players SET room = %s WHERE name = %s", [players[pid]["room"], players[pid]["name"]])
+            p = players[pid]
+            if p['authenticated'] is not None:
+                # print('Saving' + p['name'])
+
+                cursor.execute('''
+                    UPDATE tbl_Players 
+                    SET 
+                        room = {room},
+                        exp  = {exp},
+                        str  = {str},
+                        per  = {per},
+                        endu = {endu},
+                        cha  = {cha},
+                        int  = {int},
+                        agi  = {agi},
+                        luc  = {luc},
+                        cred = {cred},
+                        inv  = '{inv}',
+
+                        clo_head  = {clo_head},
+                        clo_larm  = {clo_larm},
+                        clo_rarm  = {clo_rarm},
+                        clo_lhand = {clo_lhand},
+                        clo_rhand = {clo_rhand},
+                        clo_chest = {clo_chest},
+                        clo_lleg  = {clo_lleg},
+                        clo_rleg  = {clo_rleg},
+
+                        clo_feet  = {clo_feet},
+                        imp_head  = {imp_head},
+                        imp_larm  = {imp_larm},
+                        imp_rarm  = {imp_rarm},
+                        imp_lhand = {imp_lhand},
+                        imp_rhand = {imp_rhand},
+                        imp_chest = {imp_chest},
+                        imp_lleg  = {imp_lleg},
+                        imp_rleg  = {imp_rleg},
+                        imp_feet  = {imp_feet},
+
+                        hp = {hp},
+                        charge = {charge},
+                        lvl = {lvl} 
+                    WHERE name = '{name}';
+                    '''.format(
+                        room = p["room"], 
+                        exp  = p["exp"], 
+                        str  = p["str"], 
+                        per  = p["per"], 
+                        endu = p["endu"], 
+                        cha  = p["cha"], 
+                        int  = p["int"], 
+                        agi  = p["agi"], 
+                        luc  = p["luc"], 
+                        cred = p["cred"], 
+                        inv  = ",".join(p["inv"]),
+
+                        clo_head  = p["clo_head"], 
+                        clo_larm  = p["clo_larm"], 
+                        clo_rarm  = p["clo_rarm"], 
+                        clo_lhand = p["clo_lhand"], 
+                        clo_rhand = p["clo_rhand"], 
+                        clo_chest = p["clo_chest"], 
+                        clo_lleg  = p["clo_lleg"], 
+                        clo_rleg  = p["clo_rleg"], 
+
+                        clo_feet  = p["clo_feet"], 
+                        imp_head  = p["imp_head"], 
+                        imp_larm  = p["imp_larm"], 
+                        imp_rarm  = p["imp_rarm"], 
+                        imp_lhand = p["imp_lhand"], 
+                        imp_rhand = p["imp_rhand"], 
+                        imp_chest = p["imp_chest"], 
+                        imp_lleg  = p["imp_lleg"], 
+                        imp_rleg  = p["imp_rleg"], 
+                        imp_feet  = p["imp_feet"], 
+
+                        hp = p["hp"], 
+                        charge = p["charge"], 
+                        name = p["name"]
+                    )
                 cnxn.commit()
-                cursor.execute("UPDATE tbl_Players SET lvl = %s WHERE name = %s", [players[pid]["lvl"], players[pid]["name"]])
-                cnxn.commit()
-                cursor.execute("UPDATE tbl_Players SET exp = %s WHERE name = %s", [players[pid]["exp"], players[pid]["name"]])
-                cnxn.commit()
-                cursor.execute("UPDATE tbl_Players SET str = %s WHERE name = %s", [players[pid]["str"], players[pid]["name"]])
-                cnxn.commit()
-                cursor.execute("UPDATE tbl_Players SET per = %s WHERE name = %s", [players[pid]["per"], players[pid]["name"]])
-                cnxn.commit()
-                cursor.execute("UPDATE tbl_Players SET endu = %s WHERE name = %s", [players[pid]["endu"], players[pid]["name"]])
-                cnxn.commit()
-                cursor.execute("UPDATE tbl_Players SET cha = %s WHERE name = %s", [players[pid]["cha"], players[pid]["name"]])
-                cnxn.commit()
-                cursor.execute("UPDATE tbl_Players SET inte = %s WHERE name = %s", [players[pid]["int"], players[pid]["name"]])
-                cnxn.commit()
-                cursor.execute("UPDATE tbl_Players SET agi = %s WHERE name = %s", [players[pid]["agi"], players[pid]["name"]])
-                cnxn.commit()
-                cursor.execute("UPDATE tbl_Players SET luc = %s WHERE name = %s", [players[pid]["luc"], players[pid]["name"]])
-                cnxn.commit()
-                cursor.execute("UPDATE tbl_Players SET cred = %s WHERE name = %s", [players[pid]["cred"], players[pid]["name"]])
-                cnxn.commit()
-                cursor.execute("UPDATE tbl_Players SET inv = %s WHERE name = %s", [str(",".join(players[pid]["inv"])), players[pid]["name"]])
-                cnxn.commit()
-                cursor.execute("UPDATE tbl_Players SET clo_head = %s WHERE name = %s", [players[pid]["clo_head"], players[pid]["name"]])
-                cnxn.commit()
-                cursor.execute("UPDATE tbl_Players SET clo_larm = %s WHERE name = %s", [players[pid]["clo_larm"], players[pid]["name"]])
-                cnxn.commit()
-                cursor.execute("UPDATE tbl_Players SET clo_rarm = %s WHERE name = %s", [players[pid]["clo_rarm"], players[pid]["name"]])
-                cnxn.commit()
-                cursor.execute("UPDATE tbl_Players SET clo_lhand = %s WHERE name = %s", [players[pid]["clo_lhand"], players[pid]["name"]])
-                cnxn.commit()
-                cursor.execute("UPDATE tbl_Players SET clo_rhand = %s WHERE name = %s", [players[pid]["clo_rhand"], players[pid]["name"]])
-                cnxn.commit()
-                cursor.execute("UPDATE tbl_Players SET clo_chest = %s WHERE name = %s", [players[pid]["clo_chest"], players[pid]["name"]])
-                cnxn.commit()
-                cursor.execute("UPDATE tbl_Players SET clo_lleg = %s WHERE name = %s", [players[pid]["clo_lleg"], players[pid]["name"]])
-                cnxn.commit()
-                cursor.execute("UPDATE tbl_Players SET clo_rleg = %s WHERE name = %s", [players[pid]["clo_rleg"], players[pid]["name"]])
-                cnxn.commit()
-                cursor.execute("UPDATE tbl_Players SET clo_feet = %s WHERE name = %s", [players[pid]["clo_feet"], players[pid]["name"]])
-                cnxn.commit()
-                cursor.execute("UPDATE tbl_Players SET imp_head = %s WHERE name = %s", [players[pid]["imp_head"], players[pid]["name"]])
-                cnxn.commit()
-                cursor.execute("UPDATE tbl_Players SET imp_larm = %s WHERE name = %s", [players[pid]["imp_larm"], players[pid]["name"]])
-                cnxn.commit()
-                cursor.execute("UPDATE tbl_Players SET imp_rarm = %s WHERE name = %s", [players[pid]["imp_rarm"], players[pid]["name"]])
-                cnxn.commit()
-                cursor.execute("UPDATE tbl_Players SET imp_lhand = %s WHERE name = %s", [players[pid]["imp_lhand"], players[pid]["name"]])
-                cnxn.commit()
-                cursor.execute("UPDATE tbl_Players SET imp_rhand = %s WHERE name = %s", [players[pid]["imp_rhand"], players[pid]["name"]])
-                cnxn.commit()
-                cursor.execute("UPDATE tbl_Players SET imp_chest = %s WHERE name = %s", [players[pid]["imp_chest"], players[pid]["name"]])
-                cnxn.commit()
-                cursor.execute("UPDATE tbl_Players SET imp_lleg = %s WHERE name = %s", [players[pid]["imp_lleg"], players[pid]["name"]])
-                cnxn.commit()
-                cursor.execute("UPDATE tbl_Players SET imp_rleg = %s WHERE name = %s", [players[pid]["imp_rleg"], players[pid]["name"]])
-                cnxn.commit()
-                cursor.execute("UPDATE tbl_Players SET imp_feet = %s WHERE name = %s", [players[pid]["imp_feet"], players[pid]["name"]])
-                cnxn.commit()
-                cursor.execute("UPDATE tbl_Players SET hp = %s WHERE name = %s", [players[pid]["hp"], players[pid]["name"]])
-                cnxn.commit()
-                cursor.execute("UPDATE tbl_Players SET charge = %s WHERE name = %s", [players[pid]["charge"], players[pid]["name"]])
-                cnxn.commit()
+
         cnxn.close()
         # State Save logic End
         lastStateSave = now
@@ -587,9 +603,9 @@ while True:
         # move on to the next one
         if id not in players:
             continue
-		
+        
         log("Client ID:" + str(id) + " has disconnected (" + str(players[id]['name']) + ")", "info")
-		
+        
         # go through all the players in the game
         for (pid, pl) in list(players.items()):
             # send each player a message to tell them about the diconnected
@@ -761,7 +777,7 @@ while True:
                 players[id]['lastCombatAction'] = int(time.time())
                 players[id]['isAttackable'] = 1
                 players[id]['corpseTTL'] = 60
-				
+                
                 log("Client ID: " + str(id) + " has successfully authenticated user " + players[id]['name'], "info")
                 
                 # Debug - print data extracted from DB onto console
@@ -812,7 +828,7 @@ while True:
             mud.send_message(id, '  take <item>      - pick up an item lying ' + "on the floor")
             mud.send_message(id, '  drop <item>      - drop an item from your inventory ' + "on the floor")
             mud.send_message(id, '  colortest        - showcase client`s ability to display ' + "colorful text")
-			
+            
         elif command.lower() == 'say':
         # 'say' command
             # go through every player in the game
