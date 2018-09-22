@@ -22,6 +22,156 @@ from copy import deepcopy
 
 log("", "Server Boot")
 
+def fetch_all_items(db_conn):
+    db_cursor = db_conn.cursor(pymysql.cursors.DictCursor)
+    db_cursor.execute("SELECT * FROM tbl_Items;")
+    db_response = cursor.fetchall()
+    db_cursor.close()
+
+    item_dict = {}
+
+    if db_response:
+        for dict_row in db_response:
+            id = dict_row['id']
+            item_dict[id] = dict_row
+
+    return item_dict
+
+
+def fetch_player(db_cursor, name, password):
+    db_cursor.execute(
+        '''
+            SELECT * 
+            FROM tbl_Players 
+            WHERE 
+                name = '{name}' 
+                AND password = '{password}'
+            ;
+        '''.format(name = name, password = password))
+    db_response = db_cursor.fetchone()
+    if not db_response or not len(db_response):
+        return None
+    else:
+        return {
+            'room' : db_response[1],
+            'lvl' : db_response[2],
+            'exp' : db_response[3],
+            'str' : db_response[4],
+            'per' : db_response[5],
+            'endu' : db_response[6],
+            'cha' : db_response[7],
+            'int' : db_response[8],
+            'agi' : db_response[9],
+            'luc' : db_response[10],
+            'cred' : db_response[11],
+            'inv' : db_response[12].split(',').filter(lambda it: it not in ('', ' ')),
+            'clo_head' : db_response[14],
+            'clo_larm' : db_response[15],
+            'clo_rarm' : db_response[16],
+            'clo_lhand' : db_response[17],
+            'clo_rhand' : db_response[18],
+            'clo_chest' : db_response[19],
+            'clo_lleg' : db_response[20],
+            'clo_rleg' : db_response[21],
+            'clo_feet' : db_response[22],
+            'imp_head' : db_response[23],
+            'imp_larm' : db_response[24],
+            'imp_rarm' : db_response[25],
+            'imp_lhand' : db_response[26],
+            'imp_rhand' : db_response[27],
+            'imp_chest' : db_response[28],
+            'imp_lleg' : db_response[29],
+            'imp_rleg' : db_response[30],
+            'imp_feet' : db_response[31],
+            'hp' : db_response[32],
+            'charge' : db_response[33],
+            'isInCombat' : 0,
+            'lastCombatAction' : int(time.time()),
+            'isAttackable' : 1,
+            'corpseTTL' : 60
+        }
+
+
+def save_player(db_cursor, p):
+    # print('Saving' + p['name'])
+    db_cursor.execute('''
+        UPDATE tbl_Players 
+        SET 
+            room = {room},
+            exp  = {exp},
+            str  = {str},
+            per  = {per},
+            endu = {endu},
+            cha  = {cha},
+            int  = {int},
+            agi  = {agi},
+            luc  = {luc},
+            cred = {cred},
+            inv  = '{inv}',
+
+            clo_head  = {clo_head},
+            clo_larm  = {clo_larm},
+            clo_rarm  = {clo_rarm},
+            clo_lhand = {clo_lhand},
+            clo_rhand = {clo_rhand},
+            clo_chest = {clo_chest},
+            clo_lleg  = {clo_lleg},
+            clo_rleg  = {clo_rleg},
+
+            clo_feet  = {clo_feet},
+            imp_head  = {imp_head},
+            imp_larm  = {imp_larm},
+            imp_rarm  = {imp_rarm},
+            imp_lhand = {imp_lhand},
+            imp_rhand = {imp_rhand},
+            imp_chest = {imp_chest},
+            imp_lleg  = {imp_lleg},
+            imp_rleg  = {imp_rleg},
+            imp_feet  = {imp_feet},
+
+            hp = {hp},
+            charge = {charge},
+            lvl = {lvl} 
+        WHERE name = '{name}';
+        '''.format(
+            room = p["room"], 
+            exp  = p["exp"], 
+            str  = p["str"], 
+            per  = p["per"], 
+            endu = p["endu"], 
+            cha  = p["cha"], 
+            int  = p["int"], 
+            agi  = p["agi"], 
+            luc  = p["luc"], 
+            cred = p["cred"], 
+            inv  = ",".join(p["inv"]),
+
+            clo_head  = p["clo_head"], 
+            clo_larm  = p["clo_larm"], 
+            clo_rarm  = p["clo_rarm"], 
+            clo_lhand = p["clo_lhand"], 
+            clo_rhand = p["clo_rhand"], 
+            clo_chest = p["clo_chest"], 
+            clo_lleg  = p["clo_lleg"], 
+            clo_rleg  = p["clo_rleg"], 
+
+            clo_feet  = p["clo_feet"], 
+            imp_head  = p["imp_head"], 
+            imp_larm  = p["imp_larm"], 
+            imp_rarm  = p["imp_rarm"], 
+            imp_lhand = p["imp_lhand"], 
+            imp_rhand = p["imp_rhand"], 
+            imp_chest = p["imp_chest"], 
+            imp_lleg  = p["imp_lleg"], 
+            imp_rleg  = p["imp_rleg"], 
+            imp_feet  = p["imp_feet"], 
+
+            hp = p["hp"], 
+            charge = p["charge"], 
+            name = p["name"]
+        ))
+
+
 # Load rooms
 rooms = {
     '$rid=0$': {'description': 'You wake up in your private quarter aboard the Mariner spacecraft. Your room is dark, the only source of light being a wall screen displaying current time of day on Earth. You can hear a distant hum of ventilation equipment and a characteristic buzz of FTL engines, currently pushing you through a vast, unknown expand of space.',
@@ -174,42 +324,7 @@ log("Environment Actors loaded: " + str(len(env)), "info")
             # print (y,':',env[x][y])
 
 # Fetch tbl_Items and populate itemsDB[]
-cursor.execute("SELECT * FROM tbl_Items")
-dbResponse = cursor.fetchall()
-
-for item in dbResponse:
-    itemsDB[item[0]] = {
-        'name': item[1],
-        'long_description': item[2],
-        'short_description': item[3],
-        'clo_head': item[4],
-        'clo_larm': item[5],
-        'clo_rarm': item[6],
-        'clo_lhand': item[7],
-        'clo_rhand': item[8],
-        'clo_chest': item[9],
-        'clo_lleg': item[10],
-        'clo_rleg': item[11],
-        'clo_feet': item[12],
-        'imp_head': item[13],
-        'imp_larm': item[14],
-        'imp_rarm': item[15],
-        'imp_lhand': item[16],
-        'imp_rhand': item[17],
-        'imp_chest': item[18],
-        'imp_lleg': item[19],
-        'imp_rleg': item[20],
-        'imp_feet': item[21],
-        'mod_str': item[22],
-        'mod_per': item[23],
-        'mod_endu': item[24],
-        'mod_cha': item[25],
-        'mod_inte': item[26],
-        'mod_agi': item[27],
-        'mod_luc': item[28],
-        'weight': item[29],
-        'article': item[30],
-    }
+itemsDB = fetch_all_items(cnxn)
 
 log("Items loaded: " + str(len(itemsDB)), "info")
 # List items DB for debugging purposes
@@ -244,86 +359,6 @@ players = {}
 mud = MudServer()
 
 
-def save_user(db_cursor, p):
-    # print('Saving' + p['name'])
-    db_cursor.execute('''
-        UPDATE tbl_Players 
-        SET 
-            room = {room},
-            exp  = {exp},
-            str  = {str},
-            per  = {per},
-            endu = {endu},
-            cha  = {cha},
-            int  = {int},
-            agi  = {agi},
-            luc  = {luc},
-            cred = {cred},
-            inv  = '{inv}',
-
-            clo_head  = {clo_head},
-            clo_larm  = {clo_larm},
-            clo_rarm  = {clo_rarm},
-            clo_lhand = {clo_lhand},
-            clo_rhand = {clo_rhand},
-            clo_chest = {clo_chest},
-            clo_lleg  = {clo_lleg},
-            clo_rleg  = {clo_rleg},
-
-            clo_feet  = {clo_feet},
-            imp_head  = {imp_head},
-            imp_larm  = {imp_larm},
-            imp_rarm  = {imp_rarm},
-            imp_lhand = {imp_lhand},
-            imp_rhand = {imp_rhand},
-            imp_chest = {imp_chest},
-            imp_lleg  = {imp_lleg},
-            imp_rleg  = {imp_rleg},
-            imp_feet  = {imp_feet},
-
-            hp = {hp},
-            charge = {charge},
-            lvl = {lvl} 
-        WHERE name = '{name}';
-        '''.format(
-            room = p["room"], 
-            exp  = p["exp"], 
-            str  = p["str"], 
-            per  = p["per"], 
-            endu = p["endu"], 
-            cha  = p["cha"], 
-            int  = p["int"], 
-            agi  = p["agi"], 
-            luc  = p["luc"], 
-            cred = p["cred"], 
-            inv  = ",".join(p["inv"]),
-
-            clo_head  = p["clo_head"], 
-            clo_larm  = p["clo_larm"], 
-            clo_rarm  = p["clo_rarm"], 
-            clo_lhand = p["clo_lhand"], 
-            clo_rhand = p["clo_rhand"], 
-            clo_chest = p["clo_chest"], 
-            clo_lleg  = p["clo_lleg"], 
-            clo_rleg  = p["clo_rleg"], 
-
-            clo_feet  = p["clo_feet"], 
-            imp_head  = p["imp_head"], 
-            imp_larm  = p["imp_larm"], 
-            imp_rarm  = p["imp_rarm"], 
-            imp_lhand = p["imp_lhand"], 
-            imp_rhand = p["imp_rhand"], 
-            imp_chest = p["imp_chest"], 
-            imp_lleg  = p["imp_lleg"], 
-            imp_rleg  = p["imp_rleg"], 
-            imp_feet  = p["imp_feet"], 
-
-            hp = p["hp"], 
-            charge = p["charge"], 
-            name = p["name"]
-        )
-
-
 # main game loop. We loop forever (i.e. until the program is terminated)
 while True:
 
@@ -347,7 +382,7 @@ while True:
             p = players[pid]
             if p['authenticated'] is not None:
                 # print('Saving' + p['name'])
-                save_user(cursor, p)
+                save_player(cursor, p)
                 cnxn.commit()
 
         cnxn.close()
@@ -627,7 +662,7 @@ while True:
             cnxn = pymysql.connect(host=DBhost, port=DBport, user=DBuser, passwd=DBpasswd, db=DBdatabase)
             cursor = cnxn.cursor()
             log("Player disconnected, saving state", "info")
-            save_user(cursor, players[id])
+            save_player(cursor, players[id])
             cnxn.commit()
             cnxn.close()
         
@@ -671,58 +706,21 @@ while True:
             else:
                 mud.send_message(id, '<f202>User <f32>' + command + '<r> was not found!')
                 log("Client ID: " + str(id) + " has requested non existent user (" + command + ")", "info")
-        elif players[id]['name'] is not None \
-            and players[id]['authenticated'] is None:
+
+        elif players[id]['name'] is not None and players[id]['authenticated'] is None:
+
             cnxn = pymysql.connect(host=DBhost, port=DBport, user=DBuser, passwd=DBpasswd, db=DBdatabase)
-            cursor = cnxn.cursor()
-            cursor.execute("SELECT pwd FROM tbl_Players WHERE name = '" + players[id]['name'] + "'")
-            dbPass = cursor.fetchone()
-            cursor.close()
+            db_cursor = cnxn.cursor()
+            p = fetch_player(db_cursor, name, command)
+            db_cursor.close()
             cnxn.close()
 
-            if dbPass[0] == command:
-                players[id]['authenticated'] = True
-                players[id]['room'] = dbResponse[1]
-                players[id]['lvl'] = dbResponse[2]
-                players[id]['exp'] = dbResponse[3]
-                players[id]['str'] = dbResponse[4]
-                players[id]['per'] = dbResponse[5]
-                players[id]['endu'] = dbResponse[6]
-                players[id]['cha'] = dbResponse[7]
-                players[id]['int'] = dbResponse[8]
-                players[id]['agi'] = dbResponse[9]
-                players[id]['luc'] = dbResponse[10]
-                players[id]['cred'] = dbResponse[11]
-                players[id]['inv'] = dbResponse[12].split(',')
-                # Example: item_list = [e for e in item_list if e not in ('item', 5)]
-                players[id]['inv'] = [e for e in players[id]['inv'] if e not in ('', ' ')]
-                players[id]['clo_head'] = dbResponse[14]
-                players[id]['clo_larm'] = dbResponse[15]
-                players[id]['clo_rarm'] = dbResponse[16]
-                players[id]['clo_lhand'] = dbResponse[17]
-                players[id]['clo_rhand'] = dbResponse[18]
-                players[id]['clo_chest'] = dbResponse[19]
-                players[id]['clo_lleg'] = dbResponse[20]
-                players[id]['clo_rleg'] = dbResponse[21]
-                players[id]['clo_feet'] = dbResponse[22]
-                players[id]['imp_head'] = dbResponse[23]
-                players[id]['imp_larm'] = dbResponse[24]
-                players[id]['imp_rarm'] = dbResponse[25]
-                players[id]['imp_lhand'] = dbResponse[26]
-                players[id]['imp_rhand'] = dbResponse[27]
-                players[id]['imp_chest'] = dbResponse[28]
-                players[id]['imp_lleg'] = dbResponse[29]
-                players[id]['imp_rleg'] = dbResponse[30]
-                players[id]['imp_feet'] = dbResponse[31]
-                players[id]['hp'] = dbResponse[32]
-                players[id]['charge'] = dbResponse[33]
-                players[id]['isInCombat'] = 0
-                players[id]['lastCombatAction'] = int(time.time())
-                players[id]['isAttackable'] = 1
-                players[id]['corpseTTL'] = 60
-                
+            if p:
+                p['authenticated'] = True
+                players[id] = p
+
                 log("Client ID: " + str(id) + " has successfully authenticated user " + players[id]['name'], "info")
-                
+
                 # Debug - print data extracted from DB onto console
                 #print('Loaded player ' + players[id]['name'] + 'room: ' \
                 #    + players[id]['room'] + 'lvl: ' \
