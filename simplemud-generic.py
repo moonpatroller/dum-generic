@@ -794,12 +794,12 @@ while True:
                  and p['name'] is not None
                  and p['name'] != players[id]['name']
                 ]
-                ++
+                +
                 ##### Show corpses in the room
                 [corpse['name'] for (corpse_id, corpse) in corpses.items()
                  if corpse['room'] == players[id]['room']
                 ]
-                ++
+                +
                 ##### Show NPCs in the room #####
                 [npc['name'] for (npc_id, npc) in npcs.items()
                  if npc['room'] == players[id]['room']
