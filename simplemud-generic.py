@@ -788,23 +788,24 @@ while True:
 
             # Get name of every player in the game
             # if they're in the same room as the player and they have a name to be shown
-            playershere = [p['name'] for (pid, p) in players.items() 
-                           if p['room'] == players[id]['room']
-                           and p['name'] is not None
-                           and p['name'] != players[id]['name']
-                          ]
+            playershere = 
+                [p['name'] for (pid, p) in players.items() 
+                 if p['room'] == players[id]['room']
+                 and p['name'] is not None
+                 and p['name'] != players[id]['name']
+                ]
+                ++
+                ##### Show corpses in the room
+                [corpse['name'] for (corpse_id, corpse) in corpses.items()
+                 if corpse['room'] == players[id]['room']
+                ]
+                ++
+                ##### Show NPCs in the room #####
+                [npc['name'] for (npc_id, npc) in npcs.items()
+                 if npc['room'] == players[id]['room']
+                ]
 
             itemshere = []
-
-            ##### Show corpses in the room
-            for (corpse, pl) in list(corpses.items()):
-                if corpses[corpse]['room'] == players[id]['room']:
-                    playershere.append(corpses[corpse]['name'])
-                                       
-            ##### Show NPCs in the room #####
-            for (nid, pl) in list(npcs.items()):
-                if npcs[nid]['room'] == players[id]['room']:
-                    playershere.append(npcs[nid]['name'])
 
             ##### Show items in the room
             for (item, pl) in list(itemsInWorld.items()):
