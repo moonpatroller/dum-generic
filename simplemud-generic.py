@@ -542,10 +542,7 @@ while True:
             npc['isInCombat'] = 0
             npc['lastRoom'] = npc['room']
             npc['whenDied'] = int(time.time())
-            fightsCopy = deepcopy(fights)
-            for (fight_id, fight) in fightsCopy.items():
-                if fight['s1id'] == nid or fight['s2id'] == nid:
-                    del fights[fight]
+            fights = {fight_id: fight for fight_id, fight in fights.items() if fight['s1id'] != nid and fight['s2id'] != nid}
 
             corpses.append(create_corpse(npc))
 
