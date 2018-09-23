@@ -331,9 +331,11 @@ log("Items loaded: " + str(len(itemsDB)), "info")
         # print(y,':',itemsDB[x][y])
 
 # Put some items in the world for testing and debugging
-itemsInWorld[getFreeKey(itemsInWorld)] = { 'id': 200001, 'room': '$rid=1$', 'whenDropped': 1533133523, 'lifespan': 90000000, 'owner': 1}
-itemsInWorld[getFreeKey(itemsInWorld)] = { 'id': 200002, 'room': '$rid=1$', 'whenDropped': 1533133523, 'lifespan': 90002000, 'owner': 2}
-itemsInWorld[getFreeKey(itemsInWorld)] = { 'id': 200001, 'room': '$rid=1$', 'whenDropped': 1533433523, 'lifespan': 90003000, 'owner': 1}
+itemsInWorld['$rid=1$'] = [
+    { 'id': 200001, 'room': '$rid=1$', 'whenDropped': 1533133523, 'lifespan': 90000000, 'owner': 1},
+    { 'id': 200002, 'room': '$rid=1$', 'whenDropped': 1533133523, 'lifespan': 90002000, 'owner': 2},
+    { 'id': 200001, 'room': '$rid=1$', 'whenDropped': 1533433523, 'lifespan': 90003000, 'owner': 1}
+]
 
 # List items in world for debugging purposes
 # for x in itemsInWorld:
@@ -819,9 +821,10 @@ while True:
             itemshere = []
 
             ##### Show items in the room
-            for (item_id, pl) in itemsInWorld.items():
-                if itemsInWorld[item_id]['room'] == players[id]['room']:
-                    itemshere.append(itemsDB[itemsInWorld[item_id]['id']]['article'] + ' ' + itemsDB[itemsInWorld[item_id]['id']]['name'])
+            player_room_id = players[id]['room']
+            for item_record in itemsInWorld.get(player_room_id, []):
+                real_item = itemsDB[item_record['id']]
+                itemshere.append(real_item['article'] + ' ' + real_item['name'])
             
             # send player a message containing the list of players in the room
             if len(playershere) > 0:
@@ -1005,13 +1008,14 @@ while True:
                         break
 
                 # Create item on the floor in the same room as the player
-                itemsInWorld[getFreeKey(itemsInWorld)] = {
+                player_room_id = players[id]['room']
+                itemsInWorld[player_room_id] = itemsInWorld.get(player_room_id, []).append({
                   'id': itemID, 
-                  'room': players[id]['room'], 
+                  'room': player_room_id, 
                   'whenDropped': int(time.time()), 
                   'lifespan': 900000000, 
                   'owner': id 
-                }
+                })
                 
                 # Print itemsInWorld to console for debugging purposes
                 # for x in itemsInWorld:
@@ -1044,32 +1048,21 @@ while True:
                     itemName = None
                     itemID = None
 
-            itemsInWorldCopy = deepcopy(itemsInWorld)
 
-            for (iid, item) in itemsInWorldCopy.items():
-                if item['room'] == players[id]['room']:
-                    # print(str(itemsDB[itemsInWorld[iid]['id']]['name'].lower()))
-                    # print(str(params).lower())
-                    if itemsDB[itemsInWorld[iid]['id']]['name'].lower() == str(params).lower():
-                        players[id]['inv'].append(str(itemID))
-                        del itemsInWorld[iid]
-                        # mud.send_message(id, 'You pick up and place ' + itemsDB[itemID]['article'] + ' ' + itemsDB[itemID]['name'] + ' in your inventory.')
-                        itemPickedUp = True
-                        break
-                    else:
-                        # mud.send_message(id, 'You cannot see ' + str(params) + ' anywhere.')
-                        itemPickedUp = False
-                else:
-                    # mud.send_message(id, 'You cannot see ' + str(params) + ' anywhere.')
-                    itemPickedUp = False
-                    # break
+            itemPickedUp = False
+            player_room_id = players[id]['room']
+            items_in_player_room = itemsInWorld.get(player_room_id, [])
+            for item_record in items_in_player_room:
+                if itemsDB[item_record['id']]['name'].lower() == str(params).lower():
+                    players[id]['inv'].append(str(itemID))
+                    items_in_player_room.remove(item_record)
+                    itemPickedUp = True
+                    break
 
             if itemPickedUp == True:
                 mud.send_message(id, 'You pick up and place ' + itemsDB[itemID]['article'] + ' ' + itemsDB[itemID]['name'] + ' in your inventory.')
-                itemPickedUp = False
             else:
                 mud.send_message(id, 'You cannot see ' + str(params) + ' anywhere.')
-                itemPickedUp = False
 
         else:
         # some other, unrecognised command
