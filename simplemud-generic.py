@@ -600,7 +600,7 @@ while True:
             'agi': None,
             'luc': None,
             'cred': None,
-            'inv': None,
+            'inv': [],
             'authenticated': None,
             'clo_head': None,
             'clo_larm': None,
@@ -659,15 +659,14 @@ while True:
         log("Client ID:" + str(id) + " has disconnected (" + str(players[id]['name']) + ")", "info")
         
         # go through all the players in the game
-        for (pid, pl) in list(players.items()):
+        for (pid, pl) in players.items():
             # send each player a message to tell them about the diconnected
             # player if they are in the same room
-            if players[pid]['authenticated'] is not None:
-                if players[pid]['authenticated'] is not None \
-                    and players[pid]['room'] == players[id]['room'] \
-                    and players[pid]['name'] != players[id]['name']:
-                    mud.send_message(pid,
-                            "<f32><u>{}<r>'s body has vanished.".format(players[id]['name']))
+            if (players[pi]['authenticated'] is not None 
+                     and pl['authenticated'] is not None
+                     and pl['room'] == players[id]['room'] 
+                     and pl['name'] != players[id]['name']):
+                mud.send_message(pid, "<f32><u>{}<r>'s body has vanished.".format(players[id]['name']))
 
         # Code here to save player to the database after he's disconnected and before removing him from players dictionary
         if players[id]['authenticated'] is not None:
@@ -677,7 +676,7 @@ while True:
             save_player(cursor, players[id])
             cnxn.commit()
             cnxn.close()
-        
+
         # TODO: IDEA - Some sort of a timer to have the character remain in the game for some time after disconnection?
 
         # Create a deep copy of fights, iterate through it and remove fights disconnected player was taking part in
@@ -954,9 +953,9 @@ while True:
         # 'check' command
             if params.lower() == 'inventory' or params.lower() == 'inv':
                 mud.send_message(id, 'You check your inventory.')
-                if len(list(players[id]['inv'])) > 0:
+                if len(players[id]['inv']) > 0:
                     mud.send_message(id, 'You are currently in possession of: ')
-                    for i in list(players[id]['inv']):
+                    for i in players[id]['inv']:
                         mud.send_message(id, '<b234>' + itemsDB[int(i)]['name'])
                 else:
                     mud.send_message(id, 'You haven`t got any items on you.')
@@ -965,41 +964,23 @@ while True:
             else:
                 mud.send_message(id, 'Check what?')
 
-        elif command.lower() == 'drop':
         # 'drop' command
-            itemInDB = False
-            inventoryNotEmpty = False
-            itemInInventory = False
+        elif command.lower() == 'drop':
+
             itemID = None
-            itemName = None
-            
             for (iid, item) in itemsDB.items():
                 if item['name'].lower() == str(params).lower():
                     # ID of the item to be dropped
                     itemID = iid
-                    itemName = item['name']
-                    itemInDB = True
                     break
-                else:
-                    itemInDB = False
-                    itemName = None
-                    itemID = None
-
-            # Check if inventory is not empty
-            if len(list(players[id]['inv'])) > 0:
-                inventoryNotEmpty = True
-            else:
-                inventoryNotEmpty = False
 
             # Check if item is in player's inventory
+            itemInInventory = False
             for item in players[id]['inv']:
                 if int(item) == itemID:
                     itemInInventory = True
-                    break
-                else:
-                    itemInInventory = False
             
-            if itemInDB and inventoryNotEmpty and itemInInventory:
+            if itemID is not None and itemInInventory:
                 inventoryCopy = deepcopy(players[id]['inv'])
                 for i in inventoryCopy:
                     if int(i) == itemID:
@@ -1029,38 +1010,23 @@ while True:
                 mud.send_message(id, 'You don`t have that!')
 
 
-        elif command.lower() == 'take':
         # take command
-            itemInDB = None
-            itemID = None
-            itemName = None
-            # itemInRoom = None
-
-            for (iid, item) in itemsDB.items():
-                if item['name'].lower() == str(params).lower():
-                    # ID of the item to be picked up
-                    itemID = iid
-                    itemName = item['name']
-                    itemInDB = True
-                    break
-                else:
-                    itemInDB = False
-                    itemName = None
-                    itemID = None
-
+        elif command.lower() == 'take':
 
             itemPickedUp = False
+            item_id = None
             player_room_id = players[id]['room']
             items_in_player_room = itemsInWorld.get(player_room_id, [])
             for item_record in items_in_player_room:
                 if itemsDB[item_record['id']]['name'].lower() == str(params).lower():
-                    players[id]['inv'].append(str(itemID))
+                    item_id = item_record['id']
+                    players[id]['inv'].append(str(item_id))
                     items_in_player_room.remove(item_record)
                     itemPickedUp = True
                     break
 
-            if itemPickedUp == True:
-                mud.send_message(id, 'You pick up and place ' + itemsDB[itemID]['article'] + ' ' + itemsDB[itemID]['name'] + ' in your inventory.')
+            if itemPickedUp:
+                mud.send_message(id, 'You pick up and place ' + itemsDB[item_id]['article'] + ' ' + itemsDB[item_id]['name'] + ' in your inventory.')
             else:
                 mud.send_message(id, 'You cannot see ' + str(params) + ' anywhere.')
 
