@@ -22,6 +22,7 @@ from copy import deepcopy
 
 log("", "Server Boot")
 
+
 def fetch_npcs(db_conn):
     db_cursor = db_conn.cursor(pymysql.cursors.DictCursor)
     db_cursor.execute("SELECT * FROM tbl_NPC;")
@@ -198,6 +199,17 @@ def save_player(db_cursor, p):
         ))
 
 
+def save_players(db_conn, players):
+    db_cursor = db_conn.cursor()
+    for (pid, pl) in list(players.items()):
+        p = players[pid]
+        if p['authenticated'] is not None:
+            # print('Saving' + p['name'])
+            save_player(db_cursor, p)
+            db_conn.commit()
+    db_cursor.close()
+
+
 # Load rooms
 rooms = {
     '$rid=0$': {'description': 'You wake up in your private quarter aboard the Mariner spacecraft. Your room is dark, the only source of light being a wall screen displaying current time of day on Earth. You can hear a distant hum of ventilation equipment and a characteristic buzz of FTL engines, currently pushing you through a vast, unknown expand of space.',
@@ -346,21 +358,13 @@ while True:
 
     # Check if State Save is due and execute it if required
     now = int(time.time())
-    if int(now >= lastStateSave + stateSaveInterval):
+    if now >= lastStateSave + stateSaveInterval:
         # print("[info] Saving player state")
         
-        # State Save logic Start
+        # State Save logic
         cnxn = pymysql.connect(host=DBhost, port=DBport, user=DBuser, passwd=DBpasswd, db=DBdatabase)
-        cursor = cnxn.cursor()
-        for (pid, pl) in list(players.items()):
-            p = players[pid]
-            if p['authenticated'] is not None:
-                # print('Saving' + p['name'])
-                save_player(cursor, p)
-                cnxn.commit()
-
+        save_players(cnxn, players)
         cnxn.close()
-        # State Save logic End
         lastStateSave = now
 
     # Handle Player Deaths
