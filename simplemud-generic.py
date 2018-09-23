@@ -210,6 +210,17 @@ def save_players(db_conn, players):
     db_cursor.close()
 
 
+def create_corpse(body):
+    return { 
+    'room': body['room'], 
+    'name': str(body['name'] + '`s corpse'), 
+    'inv' : body['inv'], 
+    'died': int(time.time()), 
+    'TTL' : body['corpseTTL'], 
+    'owner': 1
+  }
+
+
 # Load rooms
 rooms = {
     '$rid=0$': {'description': 'You wake up in your private quarter aboard the Mariner spacecraft. Your room is dark, the only source of light being a wall screen displaying current time of day on Earth. You can hear a distant hum of ventilation equipment and a characteristic buzz of FTL engines, currently pushing you through a vast, unknown expand of space.',
@@ -372,14 +383,8 @@ while True:
         if pl['authenticated'] == True:
             if pl['hp'] <= 0:
                 # Create player's corpse in the room
-                corpses[len(corpses)] = { 
-                  'room': pl['room'], 
-                  'name': str(pl['name'] + '`s corpse'), 
-                  'inv' : pl['inv'], 
-                  'died': int(time.time()), 
-                  'TTL' : pl['corpseTTL'], 
-                  'owner': 1
-                }
+                corpses.append(create_corpse(pl))
+
                 # Clear player's inventory, it stays on the corpse
                 # This is bugged, causing errors when picking up things after death
                 # players[pid]['inv'] = ''
@@ -539,14 +544,9 @@ while True:
             for (fight_id, fight) in fightsCopy.items():
                 if fight['s1id'] == nid or fight['s2id'] == nid:
                     del fights[fight]
-            corpses[len(corpses)] = {
-                'room': npc['room'], 
-                'name': str(npc['name'] + '`s corpse'), 
-                'inv': npc['inv'],
-                'died': int(time.time()), 
-                'TTL': npc['corpseTTL'], 
-                'owner': 1
-            }
+
+            corpses.append(create_corpse(npc))
+
             for (pid, pl) in players.items():
                 if pl['authenticated'] is not None and pl['room'] == npc['room']:
                     mud.send_message(pid, "<f32><u>{}<r> <f88>has been killed.".format(npc['name']))
@@ -568,12 +568,8 @@ while True:
                         mud.send_message(pid, msg)
             e['timeTalked'] =  now
 
-    # Iterate through corpses and remove ones older than their TTL
-    corpsesCopy = deepcopy(corpses)
-    for (c, corpse) in corpsesCopy.items():
-        if int(time.time()) >= corpse['died'] + corpse['TTL']:
-            # print("deleting " + corpses[corpse]['name'])
-            del corpses[c]
+    # Keep corpses not older than their TTL
+    corpses = {id: corpse for id, corpse in corpses.items() if int(time.time()) < corpse['died'] + corpse['TTL']}
 
     # Handle NPC respawns
     for (nid, npc) in npcs.items():
