@@ -736,13 +736,13 @@ while True:
                 #    + str(players[id]['cred']))
 
                 # go through all the players in the game
-                for (pid, pl) in list(players.items()):
+                for (pid, pl) in players.items():
                      # send each player a message to tell them about the new player
                      # print("player pid: " + players[pid]["room"] + ", player id: " + players[id]["room"])
-                    if players[pid]['authenticated'] is not None \
-                        and players[pid]['room'] == players[id]['room'] \
-                        and players[pid]['name'] != players[id]['name']:
-                        mud.send_message(pid, '{} has materialised out of thin air nearby.'.format(players[id]['name']))
+                    if pl['authenticated'] is not None \
+                        and pl['room'] == players[id]['room'] \
+                        and pl['name'] != players[id]['name']:
+                        mud.send_message(pid, '{} has materialised out of thin air nearby.'.format(p['name']))
 
                 # send the new player a welcome message
                 mud.send_message(id, '<f15>Welcome to the game, {}. '.format(players[id]['name']))
@@ -773,9 +773,9 @@ while True:
         elif command.lower() == 'say':
         # 'say' command
             # go through every player in the game
-            for (pid, pl) in list(players.items()):
+            for (pid, pl) in players.items():
                 # if they're in the same room as the player
-                if players[pid]['room'] == players[id]['room']:
+                if pl['room'] == players[id]['room']:
                     # send them a message telling them what the player said
                     mud.send_message(pid, '<f32>{}<r> says: <f159>{}'.format(players[id]['name'], params))
         elif command.lower() == 'look':
@@ -809,9 +809,9 @@ while True:
             itemshere = []
 
             ##### Show items in the room
-            for (item, pl) in list(itemsInWorld.items()):
-                if itemsInWorld[item]['room'] == players[id]['room']:
-                    itemshere.append(itemsDB[itemsInWorld[item]['id']]['article'] + ' ' + itemsDB[itemsInWorld[item]['id']]['name'])
+            for (item_id, pl) in itemsInWorld.items():
+                if itemsInWorld[item_id]['room'] == players[id]['room']:
+                    itemshere.append(itemsDB[itemsInWorld[item_id]['id']]['article'] + ' ' + itemsDB[itemsInWorld[item_id]['id']]['name'])
             
             # send player a message containing the list of players in the room
             if len(playershere) > 0:
@@ -831,37 +831,45 @@ while True:
             target = params #.lower()
             targetFound = False
 
-            for (fight, pl) in fights.items():
-                if fights[fight]['s1'] == players[id]['name']:
+            for (fighter_id, fighter) in fights.items():
+                if fighter['s1'] == players[id]['name']:
                     isAlreadyAttacking = True
-                    currentTarget = fights[fight]['s2']
+                    currentTarget = fighter['s2']
 
             if isAlreadyAttacking == False:
                 if players[id]['name'].lower() != target.lower():
                     for (pid, pl) in players.items():
-                        if players[pid]['name'].lower() == target.lower():
+                        if pl['name'].lower() == target.lower():
                             targetFound = True
                             victimId = pid
                             attackerId = id
-                            if players[pid]['room'] == players[id]['room']:
-                                fights[len(fights)] = { 's1': players[id]['name'], 's2': target, 's1id': attackerId, 's2id': victimId, 's1type': 'pc', 's2type': 'pc', 'retaliated': 0 }
+                            if pl['room'] == players[id]['room']:
+                                fights[len(fights)] = { 
+                                  's1': players[id]['name'], 
+                                  's2': target, 
+                                  's1id': attackerId, 
+                                  's2id': victimId, 
+                                  's1type': 'pc', 
+                                  's2type': 'pc', 
+                                  'retaliated': 0 
+                                }
                                 mud.send_message(id, '<f214>Attacking <r><u><f32>' + target + '!')
                             else:
                                 targetFound = False
 
                     # mud.send_message(id, 'You cannot see ' + target + ' anywhere nearby.|')
-                    if(targetFound == False):
-                        for (nid, pl) in list(npcs.items()):
-                            if npcs[nid]['name'].lower() == target.lower():
+                    if targetFound == False:
+                        for (nid, npc) in npcs.items():
+                            if npc['name'].lower() == target.lower():
                                 victimId = nid
                                 attackerId = id
                                 # print('found target npc')
-                                if npcs[nid]['room'] == players[id]['room'] and targetFound == False:
+                                if npc['room'] == players[id]['room'] and targetFound == False:
                                     targetFound = True
                                     # print('target found!')
-                                    if players[id]['room'] == npcs[nid]['room']:
+                                    if players[id]['room'] == npc['room']:
                                         fights[len(fights)] = { 's1': players[id]['name'], 's2': nid, 's1id': attackerId, 's2id': victimId, 's1type': 'pc', 's2type': 'npc', 'retaliated': 0 }
-                                        mud.send_message(id, 'Attacking <u><f21>' + npcs[nid]['name'] + '<r>!')
+                                        mud.send_message(id, 'Attacking <u><f21>' + npc['name'] + '<r>!')
                                     else:
                                         pass
 
@@ -891,26 +899,23 @@ while True:
             # if the specified exit is found in the room's exits list
             if ex in rm['exits']:
                 # go through all the players in the game
-                for (pid, pl) in list(players.items()):
+                for (pid, pl) in players.items():
                     # if player is in the same room and isn't the player
                     # sending the command
-                    if players[pid]['room'] == players[id]['room'] \
-                        and pid != id:
+                    if pl['room'] == players[id]['room'] and pid != id:
                         # send them a message telling them that the player
                         # left the room
-                        mud.send_message(pid,
-                                '<f32>{}<r> left via exit {}'.format(players[id]['name'], ex))
+                        mud.send_message(pid, '<f32>{}<r> left via exit {}'.format(players[id]['name'], ex))
 
                 # update the player's current room to the one the exit leads to
                 players[id]['room'] = rm['exits'][ex]
                 rm = rooms[players[id]['room']]
 
                 # go through all the players in the game
-                for (pid, pl) in list(players.items()):
+                for (pid, pl) in players.items():
                     # if player is in the same (new) room and isn't the player
                     # sending the command
-                    if players[pid]['room'] == players[id]['room'] \
-                        and pid != id:
+                    if pl['room'] == players[id]['room'] and pid != id:
                         # send them a message telling them that the player
                         # entered the room
                         # mud.send_message(pid, '{} arrived via exit {}|'.format(players[id]['name'], ex))
@@ -947,11 +952,11 @@ while True:
             itemID = None
             itemName = None
             
-            for (iid, pl) in list(itemsDB.items()):
-                if itemsDB[iid]['name'].lower() == str(params).lower():
+            for (iid, item) in itemsDB.items():
+                if item['name'].lower() == str(params).lower():
                     # ID of the item to be dropped
                     itemID = iid
-                    itemName = itemsDB[iid]['name']
+                    itemName = item['name']
                     itemInDB = True
                     break
                 else:
@@ -982,7 +987,13 @@ while True:
                         break
 
                 # Create item on the floor in the same room as the player
-                itemsInWorld[getFreeKey(itemsInWorld)] = { 'id': itemID, 'room': players[id]['room'], 'whenDropped': int(time.time()), 'lifespan': 900000000, 'owner': id }
+                itemsInWorld[getFreeKey(itemsInWorld)] = {
+                  'id': itemID, 
+                  'room': players[id]['room'], 
+                  'whenDropped': int(time.time()), 
+                  'lifespan': 900000000, 
+                  'owner': id 
+                }
                 
                 # Print itemsInWorld to console for debugging purposes
                 # for x in itemsInWorld:
@@ -1003,11 +1014,11 @@ while True:
             itemName = None
             # itemInRoom = None
 
-            for (iid, pl) in list(itemsDB.items()):
-                if itemsDB[iid]['name'].lower() == str(params).lower():
+            for (iid, item) in itemsDB.items():
+                if item['name'].lower() == str(params).lower():
                     # ID of the item to be picked up
                     itemID = iid
-                    itemName = itemsDB[iid]['name']
+                    itemName = item['name']
                     itemInDB = True
                     break
                 else:
@@ -1017,8 +1028,8 @@ while True:
 
             itemsInWorldCopy = deepcopy(itemsInWorld)
 
-            for (iid, pl) in list(itemsInWorldCopy.items()):
-                if itemsInWorldCopy[iid]['room'] == players[id]['room']:
+            for (iid, item) in itemsInWorldCopy.items():
+                if item['room'] == players[id]['room']:
                     # print(str(itemsDB[itemsInWorld[iid]['id']]['name'].lower()))
                     # print(str(params).lower())
                     if itemsDB[itemsInWorld[iid]['id']]['name'].lower() == str(params).lower():
