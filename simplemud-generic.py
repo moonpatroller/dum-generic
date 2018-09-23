@@ -788,7 +788,7 @@ while True:
 
             # Get name of every player in the game
             # if they're in the same room as the player and they have a name to be shown
-            playershere = 
+            playershere = (
                 [p['name'] for (pid, p) in players.items() 
                  if p['room'] == players[id]['room']
                  and p['name'] is not None
@@ -804,6 +804,7 @@ while True:
                 [npc['name'] for (npc_id, npc) in npcs.items()
                  if npc['room'] == players[id]['room']
                 ]
+            )
 
             itemshere = []
 
