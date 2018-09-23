@@ -22,6 +22,32 @@ from copy import deepcopy
 
 log("", "Server Boot")
 
+def fetch_npcs(db_conn):
+    db_cursor = db_conn.cursor(pymysql.cursors.DictCursor)
+    db_cursor.execute("SELECT * FROM tbl_NPC;")
+    db_response = cursor.fetchall()
+    db_cursor.close()
+
+    npcs = {}
+
+    if db_response:
+        for dict_row in db_response:
+            seconds = int(time.time())
+            dict_row['timeTalked'] = seconds
+            dict_row['lastCombatAction'] = seconds
+
+            dict_row['vocabulary'] = dict_row['vocabulary'].split('|')
+            dict_row['isInCombat'] = 0
+            dict_row['lastRoom'] = None
+            dict_row['corpseTTL'] = 10
+            dict_row['whenDied'] = None
+
+            id = dict_row['id']
+            npcs[id] = dict_row
+
+    return npcs
+
+
 def fetch_all_items(db_conn):
     db_cursor = db_conn.cursor(pymysql.cursors.DictCursor)
     db_cursor.execute("SELECT * FROM tbl_Items;")
@@ -237,62 +263,10 @@ DBdatabase = '<database>'
 log("Connecting to database", "info")
 cnxn = pymysql.connect(host=DBhost, port=DBport, user=DBuser, passwd=DBpasswd, db=DBdatabase)
 cursor = cnxn.cursor()
-cursor.execute("SELECT * FROM tbl_NPC")
-dbResponse = cursor.fetchall()
 
-for npc in dbResponse:
-    npcs[npc[0]] = {
-    'name': npc[1],
-    'room': npc[2],
-    'lvl': npc[3],
-    'exp': npc[4],
-    'str': npc[5],
-    'per': npc[6],
-    'endu': npc[7],
-    'cha': npc[8],
-    'inte': npc[9],
-    'agi': npc[10],
-    'luc': npc[11],
-    'cred': npc[12],
-    'inv': npc[13],
-    'isAttackable': npc[14],
-    'isStealable': npc[15],
-    'isKillable': npc[16],
-    'isAggressive': npc[17],
-    'vocabulary': npc[18].split('|'),
-    'talkDelay': npc[19],
-    'lookDescription': npc[20],
-    'timeTalked': int(time.time()),
-    'clo_head': npc[21],
-    'clo_larm': npc[22],
-    'clo_rarm': npc[23],
-    'clo_lhand': npc[24],
-    'clo_rhand': npc[25],
-    'clo_chest': npc[26],
-    'clo_lleg': npc[27],
-    'clo_rleg': npc[28],
-    'clo_feet': npc[29],
-    'imp_head': npc[30],
-    'imp_larm': npc[31],
-    'imp_rarm': npc[32],
-    'imp_lhand': npc[33],
-    'imp_rhand': npc[34],
-    'imp_chest': npc[35],
-    'imp_lleg': npc[36],
-    'imp_rleg': npc[37],
-    'imp_feet': npc[38],
-    'hp': npc[39],
-    'charge': npc[40],
-    'isInCombat': 0,
-    'lastCombatAction': int(time.time()),
-    'lastRoom': None,
-    'corpseTTL': 10,
-    'respawn': npc[42],
-    'whenDied': None
-    }
-
+npcs = fetch_npcs(cnxn)
 log("NPCs loaded: " + str(len(npcs)), "info")
-    
+
 # Deepcopy npcs fetched from a database into a master template
 npcsTemplate = deepcopy(npcs)
 
