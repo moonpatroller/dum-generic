@@ -393,10 +393,9 @@ while True:
                 pl['isInCombat'] = 0
                 pl['lastRoom'] = pl['room']
                 pl['room'] = '$rid=666$'
-                fightsCopy = deepcopy(fights)
-                for (fight, pl) in fightsCopy.items():
-                    if fightsCopy[fight]['s1id'] == pid or fightsCopy[fight]['s2id'] == pid:
-                        del fights[fight]
+
+                fights = {fight_id: fight for fight_id, fight in fights.items() if fight['s1id'] != pid and fight['s2id'] != pid}
+
                 for (pid2, pl_2) in list(players.items()):
                     if pl_2['authenticated'] is not None \
                         and pl_2['room'] == pl['lastRoom'] \
@@ -437,10 +436,9 @@ while True:
                             mud.send_message(s2id, '<f32><u>' + player_1['name'] + '<r> missed while trying to hit you!')
                     else:
                         mud.send_message(s1id, '<f225>Suddnely you stop. It wouldn`t be a good idea to attack <f32>' + player_2['name'] + ' at this time.')
-                        fightsCopy = deepcopy(fights)
-                        for (fight, pl) in fightsCopy.items():
-                            if fightsCopy[fight]['s1id'] == s1id and fightsCopy[fight]['s2id'] == s2id:
-                                del fights[fight]
+
+                        fights = {fight_id: fight for fight_id, fight in fights.items() if fight['s1id'] != s1id or fight['s2id'] != s2id}
+
         # PC -> NPC
         elif fighter['s1type'] == 'pc' and fighter['s2type'] == 'npc':
             npc_2 = npcs[s2id]
@@ -462,10 +460,8 @@ while True:
                             mud.send_message(s1id, 'You miss <u><f21>' + npc_2['name'] + '<r> completely!')
                     else:
                         mud.send_message(s1id, '<f225>Suddenly you stop. It wouldn`t be a good idea to attack <u><f21>' + npc_2['name'] + '<r> at this time.')
-                        fightsCopy = deepcopy(fights)
-                        for (fight, pl) in fightsCopy.items():
-                            if fightsCopy[fight]['s1id'] == s1id and fightsCopy[fight]['s2id'] == s2id:
-                                del fights[fight]
+                        fights = {fight_id: fight for fight_id, fight in fights.items() if fight['s1id'] != s1id or fight['s2id'] != s2id}
+
         # NPC -> PC
         elif fighter['s1type'] == 'npc' and fighter['s2type'] == 'pc':
             npc_1 = npcs[s1id]
@@ -676,11 +672,8 @@ while True:
 
         # TODO: IDEA - Some sort of a timer to have the character remain in the game for some time after disconnection?
 
-        # Create a deep copy of fights, iterate through it and remove fights disconnected player was taking part in
-        fightsCopy = deepcopy(fights)
-        for (fight, pl) in fightsCopy.items():
-            if fightsCopy[fight]['s1'] == players[id]['name'] or fightsCopy[fight]['s2'] == players[id]['name']:
-                del fights[fight]
+        # Filter out fights with disconnected player
+        fights = {fight_id: fight for fight_id, fight in fights.items() if fight['s1'] != player_name and fight['s2'] != player_name}
 
 
         # remove the player's entry in the player dictionary
