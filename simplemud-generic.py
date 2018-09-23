@@ -71,10 +71,10 @@ def fetch_player(db_cursor, name, password):
             SELECT * 
             FROM tbl_Players 
             WHERE 
-                name = '{name}' 
-                AND password = '{password}'
+                name = %s
+                AND password = %s
             ;
-        '''.format(name = name, password = password))
+        ''', (name, password))
     db_response = db_cursor.fetchone()
     if not db_response or not len(db_response):
         return None
@@ -691,7 +691,7 @@ while True:
         if players[id]['name'] is None:
             cnxn = pymysql.connect(host=DBhost, port=DBport, user=DBuser, passwd=DBpasswd, db=DBdatabase)
             cursor = cnxn.cursor()
-            cursor.execute("SELECT * FROM tbl_Players WHERE name = '" + command + "'")
+            cursor.execute("SELECT name FROM tbl_Players WHERE name = %s ;", (command, ))
             dbResponse = cursor.fetchone()
 
             if dbResponse != None:
