@@ -904,7 +904,15 @@ while True:
                                     targetFound = True
                                     # print('target found!')
                                     if players[id]['room'] == npc['room']:
-                                        fights[len(fights)] = { 's1': players[id]['name'], 's2': nid, 's1id': attackerId, 's2id': victimId, 's1type': 'pc', 's2type': 'npc', 'retaliated': 0 }
+                                        fights[len(fights)] = {
+                                            's1': players[id]['name'], 
+                                            's2': nid, 
+                                            's1id': attackerId, 
+                                            's2id': victimId, 
+                                            's1type': 'pc', 
+                                            's2type': 'npc', 
+                                            'retaliated': 0
+                                        }
                                         mud.send_message(id, 'Attacking <u><f21>' + npc['name'] + '<r>!')
                                     else:
                                         pass
