@@ -786,18 +786,15 @@ while True:
             # send the player back the description of their current room
             mud.send_message(id, "<f42>" + rm['description'])
 
-            playershere = []
+            # Get name of every player in the game
+            # if they're in the same room as the player and they have a name to be shown
+            playershere = [p['name'] for (pid, p) in players.items() 
+                           if p['room'] == players[id]['room']
+                           and p['name'] is not None
+                           and p['name'] != players[id]['name']
+                          ]
 
             itemshere = []
-
-            # go through every player in the game
-            for (pid, pl) in list(players.items()):
-                # if they're in the same room as the player
-                if players[pid]['room'] == players[id]['room']:
-                    # ... and they have a name to be shown
-                    if players[pid]['name'] is not None and players[pid]['name'] is not players[id]['name']:
-                        # add their name to the list
-                        playershere.append(players[pid]['name'])
 
             ##### Show corpses in the room
             for (corpse, pl) in list(corpses.items()):
