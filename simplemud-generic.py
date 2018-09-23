@@ -504,82 +504,104 @@ while True:
             
 
     # Iterate through NPCs, check if its time to talk, then check if anyone is attacking it
-    for (nid, pl) in list(npcs.items()):
+    for (nid, npc) in list(npcs.items()):
         # Check if any player is in the same room, then send a random message to them
         now = int(time.time())
-        if now > npcs[nid]['timeTalked'] + npcs[nid]['talkDelay']:
-            rnd = randint(0, len(npcs[nid]['vocabulary']) - 1)
+        if now > npc['timeTalked'] + npc['talkDelay']:
+            rnd = randint(0, len(npc['vocabulary']) - 1)
             for (pid, pl) in list(players.items()):
-                if npcs[nid]['room'] == players[pid]['room']:
-                    if len(npcs[nid]['vocabulary']) > 1:
-                        #mud.send_message(pid, npcs[nid]['vocabulary'][rnd])
-                        msg = '<f21><u>' + npcs[nid]['name'] + '<r> says: <f86>' + npcs[nid]['vocabulary'][rnd]
+                if npc['room'] == pl['room']:
+                    if len(npc['vocabulary']) > 1:
+                        #mud.send_message(pid, npc['vocabulary'][rnd])
+                        msg = '<f21><u>' + npc['name'] + '<r> says: <f86>' + npc['vocabulary'][rnd]
                         mud.send_message(pid, msg)
                     else:
-                        #mud.send_message(pid, npcs[nid]['vocabulary'][0])
-                        msg = '<f21><u>' + npcs[nid]['name'] + '<r> says: <f86>' + npcs[nid]['vocabulary'][0]
+                        #mud.send_message(pid, npc['vocabulary'][0])
+                        msg = '<f21><u>' + npc['name'] + '<r> says: <f86>' + npc['vocabulary'][0]
                         mud.send_message(pid, msg)
-            npcs[nid]['timeTalked'] =  now
+            npc['timeTalked'] =  now
         # Iterate through fights and see if anyone is attacking an NPC - if so, attack him too if not in combat (TODO: and isAggressive = true)
-        for (fid, pl) in list(fights.items()):
-            if fights[fid]['s2id'] == nid and npcs[fights[fid]['s2id']]['isInCombat'] == 1 and fights[fid]['s1type'] == 'pc' and fights[fid]['retaliated'] == 0:
+        for (fid, fight) in fights.items():
+            if fight['s2id'] == nid and npcs[fight['s2id']]['isInCombat'] == 1 and fight['s1type'] == 'pc' and fight['retaliated'] == 0:
                 # print('player is attacking npc')
                 # BETA: set las combat action to now when attacking a player
-                npcs[fights[fid]['s2id']]['lastCombatAction'] = int(time.time())
-                fights[fid]['retaliated'] = 1
-                npcs[fights[fid]['s2id']]['isInCombat'] = 1
-                fights[len(fights)] = { 's1': npcs[fights[fid]['s2id']]['name'], 's2': players[fights[fid]['s1id']]['name'], 's1id': nid, 's2id': fights[fid]['s1id'], 's1type': 'npc', 's2type': 'pc', 'retaliated': 1 }
-            elif fights[fid]['s2id'] == nid and npcs[fights[fid]['s2id']]['isInCombat'] == 1 and fights[fid]['s1type'] == 'npc' and fights[fid]['retaliated'] == 0:
+                npcs[fight['s2id']]['lastCombatAction'] = int(time.time())
+                fight['retaliated'] = 1
+                npcs[fight['s2id']]['isInCombat'] = 1
+                fights[len(fights)] = {
+                    's1': npcs[fight['s2id']]['name'],
+                    's2': players[fight['s1id']]['name'],
+                    's1id': nid,
+                    's2id': fight['s1id'],
+                    's1type': 'npc',
+                    's2type': 'pc',
+                    'retaliated': 1
+                }
+            elif fight['s2id'] == nid and npcs[fight['s2id']]['isInCombat'] == 1 and fight['s1type'] == 'npc' and fight['retaliated'] == 0:
                 # print('npc is attacking npc')
                 # BETA: set las combat action to now when attacking a player
-                npcs[fights[fid]['s2id']]['lastCombatAction'] = int(time.time())
-                fights[fid]['retaliated'] = 1
-                npcs[fights[fid]['s2id']]['isInCombat'] = 1
-                fights[len(fights)] = { 's1': npcs[fights[fid]['s2id']]['name'], 's2': players[fights[fid]['s1id']]['name'], 's1id': nid, 's2id': fights[fid]['s1id'], 's1type': 'npc', 's2type': 'npc', 'retaliated': 1 }
+                npcs[fight['s2id']]['lastCombatAction'] = int(time.time())
+                fight['retaliated'] = 1
+                npcs[fight['s2id']]['isInCombat'] = 1
+                fights[len(fights)] = {
+                    's1': npcs[fight['s2id']]['name'],
+                    's2': players[fight['s1id']]['name'], 
+                    's1id': nid, 
+                    's2id': fight['s1id'], 
+                    's1type': 'npc', 
+                    's2type': 'npc', 
+                    'retaliated': 1
+                }
         # Check if NPC is still alive, if not, remove from room and create a corpse, set isInCombat to 0, set whenDied to now and remove any fights NPC was involved in
-        if npcs[nid]['hp'] <= 0:
-            npcs[nid]['isInCombat'] = 0
-            npcs[nid]['lastRoom'] = npcs[nid]['room']
-            npcs[nid]['whenDied'] = int(time.time())
+        if npc['hp'] <= 0:
+            npc['isInCombat'] = 0
+            npc['lastRoom'] = npc['room']
+            npc['whenDied'] = int(time.time())
             fightsCopy = deepcopy(fights)
-            for (fight, pl) in fightsCopy.items():
-                if fightsCopy[fight]['s1id'] == nid or fightsCopy[fight]['s2id'] == nid:
+            for (fight_id, fight) in fightsCopy.items():
+                if fight['s1id'] == nid or fight['s2id'] == nid:
                     del fights[fight]
-            corpses[len(corpses)] = { 'room': npcs[nid]['room'], 'name': str(npcs[nid]['name'] + '`s corpse'), 'inv': npcs[nid]['inv'], 'died': int(time.time()), 'TTL': npcs[nid]['corpseTTL'], 'owner': 1 }
-            for (pid, pl) in list(players.items()):
-                if players[pid]['authenticated'] is not None:
-                    if players[pid]['authenticated'] is not None and players[pid]['room'] == npcs[nid]['room']:
-                        mud.send_message(pid, "<f32><u>{}<r> <f88>has been killed.".format(npcs[nid]['name']))
-            npcs[nid]['room'] = None
-            npcs[nid]['hp'] = npcsTemplate[nid]['hp']
+            corpses[len(corpses)] = {
+                'room': npc['room'], 
+                'name': str(npc['name'] + '`s corpse'), 
+                'inv': npc['inv'],
+                'died': int(time.time()), 
+                'TTL': npc['corpseTTL'], 
+                'owner': 1
+            }
+            for (pid, pl) in players.items():
+                if pl['authenticated'] is not None and pl['room'] == npc['room']:
+                    mud.send_message(pid, "<f32><u>{}<r> <f88>has been killed.".format(npc['name']))
+            npc['room'] = None
+            npc['hp'] = npcsTemplate[nid]['hp']
 
     # Iterate through ENV elements and see if it's time to send a message to players in the same room as the ENV elements
-    for (eid, pl) in list(env.items()):
+    for (eid, e) in env.items():
         now = int(time.time())
-        if now > env[eid]['timeTalked'] + env[eid]['talkDelay']:
-            rnd = randint(0, len(env[eid]['vocabulary']) - 1)
-            for (pid, pl) in list(players.items()):
-                if env[eid]['room'] == players[pid]['room']:
-                    if len(env[eid]['vocabulary']) > 1:
-                        msg = '<f58>[' + env[eid]['name'] + ']: <f236>' + env[eid]['vocabulary'][rnd]
+        if now > e['timeTalked'] + e['talkDelay']:
+            rnd = randint(0, len(e['vocabulary']) - 1)
+            for (pid, pl) in players.items():
+                if e['room'] == pl['room']:
+                    if len(e['vocabulary']) > 1:
+                        msg = '<f58>[' + e['name'] + ']: <f236>' + e['vocabulary'][rnd]
                         mud.send_message(pid, msg)
                     else:
-                        msg = '<f58>[' + env[eid]['name'] + ']: <f236>' + env[eid]['vocabulary'][0]
+                        msg = '<f58>[' + e['name'] + ']: <f236>' + e['vocabulary'][0]
                         mud.send_message(pid, msg)
-            env[eid]['timeTalked'] =  now
+            e['timeTalked'] =  now
 
     # Iterate through corpses and remove ones older than their TTL
     corpsesCopy = deepcopy(corpses)
-    for (c, pl) in corpsesCopy.items():
-        if int(time.time()) >= corpsesCopy[c]['died'] + corpsesCopy[c]['TTL']:
+    for (c, corpse) in corpsesCopy.items():
+        if int(time.time()) >= corpse['died'] + corpse['TTL']:
             # print("deleting " + corpses[corpse]['name'])
             del corpses[c]
 
     # Handle NPC respawns
-    for (nid, pl) in list(npcs.items()):
-        if npcs[nid]['whenDied'] is not None and int(time.time()) >= npcs[nid]['whenDied'] + npcs[nid]['respawn']:
-            npcs[nid]['whenDied'] = None
-            npcs[nid]['room'] = npcsTemplate[nid]['room']
+    for (nid, npc) in npcs.items():
+        if npc['whenDied'] is not None and int(time.time()) >= npc['whenDied'] + npc['respawn']:
+            npc['whenDied'] = None
+            npc['room'] = npcsTemplate[nid]['room']
             # print("respawning " + npcs[nid]['name'])
 
     # go through any newly connected players
