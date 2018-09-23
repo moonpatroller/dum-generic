@@ -390,101 +390,115 @@ while True:
         lastStateSave = now
 
     # Handle Player Deaths
-    for (pid, pl) in list(players.items()):
-        if players[pid]['authenticated'] == True:
-            if players[pid]['hp'] <= 0:
+    for (pid, pl) in players.items():
+        if pl['authenticated'] == True:
+            if pl['hp'] <= 0:
                 # Create player's corpse in the room
-                corpses[len(corpses)] = { 'room': players[pid]['room'], 'name': str(players[pid]['name'] + '`s corpse'), 'inv': players[pid]['inv'], 'died': int(time.time()), 'TTL': players[pid]['corpseTTL'], 'owner': 1 }
+                corpses[len(corpses)] = { 
+                  'room': pl['room'], 
+                  'name': str(pl['name'] + '`s corpse'), 
+                  'inv' : pl['inv'], 
+                  'died': int(time.time()), 
+                  'TTL' : pl['corpseTTL'], 
+                  'owner': 1
+                }
                 # Clear player's inventory, it stays on the corpse
                 # This is bugged, causing errors when picking up things after death
                 # players[pid]['inv'] = ''
-                players[pid]['isInCombat'] = 0
-                players[pid]['lastRoom'] = players[pid]['room']
-                players[pid]['room'] = '$rid=666$'
+                pl['isInCombat'] = 0
+                pl['lastRoom'] = pl['room']
+                pl['room'] = '$rid=666$'
                 fightsCopy = deepcopy(fights)
                 for (fight, pl) in fightsCopy.items():
                     if fightsCopy[fight]['s1id'] == pid or fightsCopy[fight]['s2id'] == pid:
                         del fights[fight]
-                for (pid2, pl) in list(players.items()):
-                    if players[pid2]['authenticated'] is not None \
-                        and players[pid2]['room'] == players[pid]['lastRoom'] \
-                        and players[pid2]['name'] != players[pid]['name']:
-                        mud.send_message(pid2, '<u><f32>{}<r> <f124>has been killed.'.format(players[pid]['name']))
-                players[pid]['lastRoom'] = None
+                for (pid2, pl_2) in list(players.items()):
+                    if pl_2['authenticated'] is not None \
+                        and pl_2['room'] == pl['lastRoom'] \
+                        and pl_2['name'] != pl['name']:
+                        mud.send_message(pid2, '<u><f32>{}<r> <f124>has been killed.'.format(pl['name']))
+                pl['lastRoom'] = None
                 mud.send_message(pid, '<b88><f158>Oh dear! You have died!')
-                players[pid]['hp'] = 4
+                pl['hp'] = 4
 
     # Handle Fights
-    for (fid, pl) in list(fights.items()):
+    for (fid, fighter) in fights.items():
         # PC -> PC
-        if fights[fid]['s1type'] == 'pc' and fights[fid]['s2type'] == 'pc':
-            if players[fights[fid]['s1id']]['room'] == players[fights[fid]['s2id']]['room']:
-                if int(time.time()) >= players[fights[fid]['s1id']]['lastCombatAction'] + 10 - players[fights[fid]['s1id']]['agi']:
-                    if players[fights[fid]['s2id']]['isAttackable'] == 1:
-                        players[fights[fid]['s1id']]['isInCombat'] = 1
-                        players[fights[fid]['s2id']]['isInCombat'] = 1
+        s1id = fighter['s1id']
+        s2id = fighter['s2id']
+        player_1 = players[s1id]
+        player_2 = players[s2id]
+
+        if fighter['s1type'] == 'pc' and fighter['s2type'] == 'pc':
+            if player_1['room'] == player_2['room']:
+                if int(time.time()) >= player_1['lastCombatAction'] + 10 - player_1['agi']:
+                    if player_2['isAttackable'] == 1:
+                        player_1['isInCombat'] = 1
+                        player_2['isInCombat'] = 1
                         # Do damage to the PC here
                         if randint(0, 1) == 1:
                             modifier = randint(0, 10)
-                            if players[fights[fid]['s1id']]['hp'] > 0:
-                                players[fights[fid]['s2id']]['hp'] = players[fights[fid]['s2id']]['hp'] - (players[fights[fid]['s1id']]['str'] + modifier)
-                                players[fights[fid]['s1id']]['lastCombatAction'] = int(time.time())
-                                mud.send_message(fights[fid]['s1id'], 'You manage to hit <f32><u>' + players[fights[fid]['s2id']]['name'] + '<r> for <f0><b2>' + str(players[fights[fid]['s1id']]['str'] + modifier) + '<r> points of damage.')
-                                mud.send_message(fights[fid]['s2id'], '<f32>' + players[fights[fid]['s1id']]['name'] + '<r> has managed to hit you for <f15><b88>' + str(players[fights[fid]['s1id']]['str'] + modifier) + '<r> points of damage.')
+                            if player_1['hp'] > 0:
+                                player_2['hp'] = player_2['hp'] - (player_1['str'] + modifier)
+                                player_1['lastCombatAction'] = int(time.time())
+                                mud.send_message(s1id, 'You manage to hit <f32><u>' + player_2['name'] + '<r> for <f0><b2>' + str(player_1['str'] + modifier) + '<r> points of damage.')
+                                mud.send_message(s2id, '<f32>' + player_1['name'] + '<r> has managed to hit you for <f15><b88>' + str(player_1['str'] + modifier) + '<r> points of damage.')
                                 # print('----------')
-                                # print(players[fights[fid]['s1id']]['name'] + ': ' + str(players[fights[fid]['s1id']]['hp']))
-                                # print(players[fights[fid]['s2id']]['name'] + ': ' + str(players[fights[fid]['s2id']]['hp']))
+                                # print(player_1['name'] + ': ' + str(player_1['hp']))
+                                # print(player_2['name'] + ': ' + str(player_2['hp']))
                         else:
-                            players[fights[fid]['s1id']]['lastCombatAction'] = int(time.time())
-                            mud.send_message(fights[fid]['s1id'], 'You miss trying to hit <f32><u>' + players[fights[fid]['s2id']]['name'] + '')
-                            mud.send_message(fights[fid]['s2id'], '<f32><u>' + players[fights[fid]['s1id']]['name'] + '<r> missed while trying to hit you!')
+                            player_1['lastCombatAction'] = int(time.time())
+                            mud.send_message(s1id, 'You miss trying to hit <f32><u>' + player_2['name'] + '')
+                            mud.send_message(s2id, '<f32><u>' + player_1['name'] + '<r> missed while trying to hit you!')
                     else:
-                        mud.send_message(fights[fid]['s1id'], '<f225>Suddnely you stop. It wouldn`t be a good idea to attack <f32>' + players[fights[fid]['s2id']]['name'] + ' at this time.')
+                        mud.send_message(s1id, '<f225>Suddnely you stop. It wouldn`t be a good idea to attack <f32>' + player_2['name'] + ' at this time.')
                         fightsCopy = deepcopy(fights)
                         for (fight, pl) in fightsCopy.items():
-                            if fightsCopy[fight]['s1id'] == fights[fid]['s1id'] and fightsCopy[fight]['s2id'] == fights[fid]['s2id']:
+                            if fightsCopy[fight]['s1id'] == s1id and fightsCopy[fight]['s2id'] == s2id:
                                 del fights[fight]
         # PC -> NPC
-        elif fights[fid]['s1type'] == 'pc' and fights[fid]['s2type'] == 'npc':
-            if players[fights[fid]['s1id']]['room'] == npcs[fights[fid]['s2id']]['room']:
-                if int(time.time()) >= players[fights[fid]['s1id']]['lastCombatAction'] + 10 - players[fights[fid]['s1id']]['agi']:
-                    if npcs[fights[fid]['s2id']]['isAttackable'] == 1:
-                        players[fights[fid]['s1id']]['isInCombat'] = 1
-                        npcs[fights[fid]['s2id']]['isInCombat'] = 1
+        elif fighter['s1type'] == 'pc' and fighter['s2type'] == 'npc':
+            npc_2 = npcs[s2id]
+            if player_1['room'] == npc_2['room']:
+                if int(time.time()) >= player_1['lastCombatAction'] + 10 - player_1['agi']:
+                    if npc_2['isAttackable'] == 1:
+                        player_1['isInCombat'] = 1
+                        npc_2['isInCombat'] = 1
                         # Do damage to the NPC here
                         if randint(0, 1) == 1:
                             modifier = randint(0, 10)
-                            if players[fights[fid]['s1id']]['hp'] > 0:
-                                npcs[fights[fid]['s2id']]['hp'] = npcs[fights[fid]['s2id']]['hp'] - (players[fights[fid]['s1id']]['str'] + modifier)
-                                players[fights[fid]['s1id']]['lastCombatAction'] = int(time.time())
-                                mud.send_message(fights[fid]['s1id'], 'You manage to hit <f21><u>' + npcs[fights[fid]['s2id']]['name'] + '<r> for <b2><f0>' + str(players[fights[fid]['s1id']]['str'] + modifier)  + '<r> points of damage')
-                                # print(npcs[fights[fid]['s2id']]['hp'])
+                            if player_1['hp'] > 0:
+                                npc_2['hp'] = npc_2['hp'] - (player_1['str'] + modifier)
+                                player_1['lastCombatAction'] = int(time.time())
+                                mud.send_message(s1id, 'You manage to hit <f21><u>' + npc_2['name'] + '<r> for <b2><f0>' + str(player_1['str'] + modifier)  + '<r> points of damage')
+                                # print(npc_2['hp'])
                         else:
-                            players[fights[fid]['s1id']]['lastCombatAction'] = int(time.time())
-                            mud.send_message(fights[fid]['s1id'], 'You miss <u><f21>' + npcs[fights[fid]['s2id']]['name'] + '<r> completely!')
+                            player_1['lastCombatAction'] = int(time.time())
+                            mud.send_message(s1id, 'You miss <u><f21>' + npc_2['name'] + '<r> completely!')
                     else:
-                        mud.send_message(fights[fid]['s1id'], '<f225>Suddenly you stop. It wouldn`t be a good idea to attack <u><f21>' + npcs[fights[fid]['s2id']]['name'] + '<r> at this time.')
+                        mud.send_message(s1id, '<f225>Suddenly you stop. It wouldn`t be a good idea to attack <u><f21>' + npc_2['name'] + '<r> at this time.')
                         fightsCopy = deepcopy(fights)
                         for (fight, pl) in fightsCopy.items():
-                            if fightsCopy[fight]['s1id'] == fights[fid]['s1id'] and fightsCopy[fight]['s2id'] == fights[fid]['s2id']:
+                            if fightsCopy[fight]['s1id'] == s1id and fightsCopy[fight]['s2id'] == s2id:
                                 del fights[fight]
         # NPC -> PC
-        elif fights[fid]['s1type'] == 'npc' and fights[fid]['s2type'] == 'pc':
-            if npcs[fights[fid]['s1id']]['room'] == players[fights[fid]['s2id']]['room']:
-                if int(time.time()) >= npcs[fights[fid]['s1id']]['lastCombatAction'] + 10 - npcs[fights[fid]['s1id']]['agi']:
-                    npcs[fights[fid]['s1id']]['isInCombat'] = 1
-                    players[fights[fid]['s2id']]['isInCombat'] = 1
+        elif fighter['s1type'] == 'npc' and fighter['s2type'] == 'pc':
+            npc_1 = npcs[s1id]
+            if npc_1['room'] == player_2['room']:
+                if int(time.time()) >= npc_1['lastCombatAction'] + 10 - npc_1['agi']:
+                    npc_1['isInCombat'] = 1
+                    player_2['isInCombat'] = 1
                     # Do the damage to PC here
                     if randint(0, 1) == 1:
                         modifier = randint(0, 10)
-                        if npcs[fights[fid]['s1id']]['hp'] > 0:
-                            players[fights[fid]['s2id']]['hp'] = players[fights[fid]['s2id']]['hp'] - (npcs[fights[fid]['s1id']]['str'] + modifier)
-                            npcs[fights[fid]['s1id']]['lastCombatAction'] = int(time.time())
-                            mud.send_message(fights[fid]['s2id'], '<f21><u>' + npcs[fights[fid]['s1id']]['name'] + '<r> has managed to hit you for <f15><b88>' + str(npcs[fights[fid]['s1id']]['str'] + modifier) + '<r> points of damage.')
+                        if npc_1['hp'] > 0:
+                            player_2['hp'] = player_2['hp'] - (npc_1['str'] + modifier)
+                            npc_1['lastCombatAction'] = int(time.time())
+                            mud.send_message(s2id, '<f21><u>' + npc_1['name'] + '<r> has managed to hit you for <f15><b88>' + str(npc_1['str'] + modifier) + '<r> points of damage.')
                     else:
-                        npcs[fights[fid]['s1id']]['lastCombatAction'] = int(time.time())
-                        mud.send_message(fights[fid]['s2id'], '<f21><u>' + npcs[fights[fid]['s1id']]['name'] + '<r> has missed you completely!')
-        elif fights[fid]['s1type'] == 'npc' and fights[fid]['s2type'] == 'npc':
+                        npc_1['lastCombatAction'] = int(time.time())
+                        mud.send_message(s2id, '<f21><u>' + npc_1['name'] + '<r> has missed you completely!')
+        elif fighter['s1type'] == 'npc' and fighter['s2type'] == 'npc':
             test = 1
             # NPC -> NPC
             
