@@ -162,7 +162,7 @@ while True:
 
         if fighter['s1type'] == 'pc' and fighter['s2type'] == 'pc':
             if player_1['room'] == player_2['room']:
-                if int(time.time()) >= player_1['lastCombatAction'] + 10 - player_1['agi']:
+                if now >= player_1['lastCombatAction'] + 10 - player_1['agi']:
                     if player_2['isAttackable'] == 1:
                         player_1['isInCombat'] = 1
                         player_2['isInCombat'] = 1
@@ -171,14 +171,14 @@ while True:
                             modifier = randint(0, 10)
                             if player_1['hp'] > 0:
                                 player_2['hp'] = player_2['hp'] - (player_1['str'] + modifier)
-                                player_1['lastCombatAction'] = int(time.time())
+                                player_1['lastCombatAction'] = now
                                 mud.send_message(s1id, 'You manage to hit <f32><u>' + player_2['name'] + '<r> for <f0><b2>' + str(player_1['str'] + modifier) + '<r> points of damage.')
                                 mud.send_message(s2id, '<f32>' + player_1['name'] + '<r> has managed to hit you for <f15><b88>' + str(player_1['str'] + modifier) + '<r> points of damage.')
                                 # print('----------')
                                 # print(player_1['name'] + ': ' + str(player_1['hp']))
                                 # print(player_2['name'] + ': ' + str(player_2['hp']))
                         else:
-                            player_1['lastCombatAction'] = int(time.time())
+                            player_1['lastCombatAction'] = now
                             mud.send_message(s1id, 'You miss trying to hit <f32><u>' + player_2['name'] + '')
                             mud.send_message(s2id, '<f32><u>' + player_1['name'] + '<r> missed while trying to hit you!')
                     else:
@@ -190,7 +190,7 @@ while True:
         elif fighter['s1type'] == 'pc' and fighter['s2type'] == 'npc':
             npc_2 = npcs[s2id]
             if player_1['room'] == npc_2['room']:
-                if int(time.time()) >= player_1['lastCombatAction'] + 10 - player_1['agi']:
+                if now >= player_1['lastCombatAction'] + 10 - player_1['agi']:
                     if npc_2['isAttackable'] == 1:
                         player_1['isInCombat'] = 1
                         npc_2['isInCombat'] = 1
@@ -199,11 +199,11 @@ while True:
                             modifier = randint(0, 10)
                             if player_1['hp'] > 0:
                                 npc_2['hp'] = npc_2['hp'] - (player_1['str'] + modifier)
-                                player_1['lastCombatAction'] = int(time.time())
+                                player_1['lastCombatAction'] = now
                                 mud.send_message(s1id, 'You manage to hit <f21><u>' + npc_2['name'] + '<r> for <b2><f0>' + str(player_1['str'] + modifier)  + '<r> points of damage')
                                 # print(npc_2['hp'])
                         else:
-                            player_1['lastCombatAction'] = int(time.time())
+                            player_1['lastCombatAction'] = now
                             mud.send_message(s1id, 'You miss <u><f21>' + npc_2['name'] + '<r> completely!')
                     else:
                         mud.send_message(s1id, '<f225>Suddenly you stop. It wouldn`t be a good idea to attack <u><f21>' + npc_2['name'] + '<r> at this time.')
@@ -213,7 +213,7 @@ while True:
         elif fighter['s1type'] == 'npc' and fighter['s2type'] == 'pc':
             npc_1 = npcs[s1id]
             if npc_1['room'] == player_2['room']:
-                if int(time.time()) >= npc_1['lastCombatAction'] + 10 - npc_1['agi']:
+                if now >= npc_1['lastCombatAction'] + 10 - npc_1['agi']:
                     npc_1['isInCombat'] = 1
                     player_2['isInCombat'] = 1
                     # Do the damage to PC here
@@ -221,10 +221,10 @@ while True:
                         modifier = randint(0, 10)
                         if npc_1['hp'] > 0:
                             player_2['hp'] = player_2['hp'] - (npc_1['str'] + modifier)
-                            npc_1['lastCombatAction'] = int(time.time())
+                            npc_1['lastCombatAction'] = now
                             mud.send_message(s2id, '<f21><u>' + npc_1['name'] + '<r> has managed to hit you for <f15><b88>' + str(npc_1['str'] + modifier) + '<r> points of damage.')
                     else:
-                        npc_1['lastCombatAction'] = int(time.time())
+                        npc_1['lastCombatAction'] = now
                         mud.send_message(s2id, '<f21><u>' + npc_1['name'] + '<r> has missed you completely!')
         elif fighter['s1type'] == 'npc' and fighter['s2type'] == 'npc':
             test = 1
@@ -234,7 +234,6 @@ while True:
     # Iterate through NPCs, check if its time to talk, then check if anyone is attacking it
     for (nid, npc) in npcs.items():
         # Check if any player is in the same room, then send a random message to them
-        now = int(time.time())
         if now > npc['timeTalked'] + npc['talkDelay']:
             rnd = randint(0, len(npc['vocabulary']) - 1)
             for (pid, pl) in players.items():
@@ -257,7 +256,7 @@ while True:
             if fs2id == nid and npc2['isInCombat'] == 1 and fight['s1type'] == 'pc' and fight['retaliated'] == 0:
                 # print('player is attacking npc')
                 # BETA: set las combat action to now when attacking a player
-                npc2['lastCombatAction'] = int(time.time())
+                npc2['lastCombatAction'] = now
                 fight['retaliated'] = 1
                 npc2['isInCombat'] = 1
                 fights[len(fights)] = {
@@ -272,7 +271,7 @@ while True:
             elif fs2id == nid and npc2['isInCombat'] == 1 and fight['s1type'] == 'npc' and fight['retaliated'] == 0:
                 # print('npc is attacking npc')
                 # BETA: set las combat action to now when attacking a player
-                npc2['lastCombatAction'] = int(time.time())
+                npc2['lastCombatAction'] = now
                 fight['retaliated'] = 1
                 npc2['isInCombat'] = 1
                 fights[len(fights)] = {
@@ -288,7 +287,7 @@ while True:
         if npc['hp'] <= 0:
             npc['isInCombat'] = 0
             npc['lastRoom'] = npc['room']
-            npc['whenDied'] = int(time.time())
+            npc['whenDied'] = now
             fights = {fight_id: fight for fight_id, fight in fights.items() if fight['s1id'] != nid and fight['s2id'] != nid}
 
             corpses.append(create_corpse(npc))
@@ -301,7 +300,6 @@ while True:
 
     # Iterate through ENV elements and see if it's time to send a message to players in the same room as the ENV elements
     for e in env.values():
-        now = int(time.time())
         if now > e['timeTalked'] + e['talkDelay']:
             rnd = randint(0, len(e['vocabulary']) - 1)
             for (pid, pl) in players.items():
@@ -315,11 +313,11 @@ while True:
             e['timeTalked'] =  now
 
     # Keep corpses not older than their TTL
-    corpses = {id: corpse for id, corpse in corpses.items() if int(time.time()) < corpse['died'] + corpse['TTL']}
+    corpses = {id: corpse for id, corpse in corpses.items() if now < corpse['died'] + corpse['TTL']}
 
     # Handle NPC respawns
     for (nid, npc) in npcs.items():
-        if npc['whenDied'] is not None and int(time.time()) >= npc['whenDied'] + npc['respawn']:
+        if npc['whenDied'] is not None and now >= npc['whenDied'] + npc['respawn']:
             npc['whenDied'] = None
             npc['room'] = npcsTemplate[nid]['room']
             # print("respawning " + npcs[nid]['name'])
@@ -720,7 +718,7 @@ while True:
                 itemsInWorld[player_room_id] = itemsInWorld.get(player_room_id, []).append({
                   'id': itemID, 
                   'room': player_room_id, 
-                  'whenDropped': int(time.time()), 
+                  'whenDropped': now, 
                   'lifespan': 900000000, 
                   'owner': id 
                 })
