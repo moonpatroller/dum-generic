@@ -200,11 +200,10 @@ def save_player(db_cursor, p):
 
 def save_players(db_conn, players):
     db_cursor = db_conn.cursor()
-    for (pid, pl) in list(players.items()):
-        p = players[pid]
-        if p['authenticated'] is not None:
+    for pl in players.values():
+        if pl['authenticated'] is not None:
             # print('Saving' + p['name'])
-            save_player(db_cursor, p)
+            save_player(db_cursor, pl)
             db_conn.commit()
     db_cursor.close()
 
@@ -398,7 +397,7 @@ while True:
                     if fight['s1id'] != pid and fight['s2id'] != pid
                 }
 
-                for (pid2, pl_2) in list(players.items()):
+                for (pid2, pl_2) in players.items():
                     if pl_2['authenticated'] is not None \
                         and pl_2['room'] == pl['lastRoom'] \
                         and pl_2['name'] != pl['name']:
@@ -487,12 +486,12 @@ while True:
             
 
     # Iterate through NPCs, check if its time to talk, then check if anyone is attacking it
-    for (nid, npc) in list(npcs.items()):
+    for (nid, npc) in npcs.items():
         # Check if any player is in the same room, then send a random message to them
         now = int(time.time())
         if now > npc['timeTalked'] + npc['talkDelay']:
             rnd = randint(0, len(npc['vocabulary']) - 1)
-            for (pid, pl) in list(players.items()):
+            for (pid, pl) in players.items():
                 if npc['room'] == pl['room']:
                     if len(npc['vocabulary']) > 1:
                         #mud.send_message(pid, npc['vocabulary'][rnd])
