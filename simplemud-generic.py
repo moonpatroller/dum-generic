@@ -393,7 +393,10 @@ while True:
                 pl['lastRoom'] = pl['room']
                 pl['room'] = '$rid=666$'
 
-                fights = {fight_id: fight for fight_id, fight in fights.items() if fight['s1id'] != pid and fight['s2id'] != pid}
+                fights = {
+                    fight_id: fight for fight_id, fight in fights.items()
+                    if fight['s1id'] != pid and fight['s2id'] != pid
+                }
 
                 for (pid2, pl_2) in list(players.items()):
                     if pl_2['authenticated'] is not None \
