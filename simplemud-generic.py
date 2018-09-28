@@ -972,8 +972,7 @@ while True:
                     itemInInventory = True
             
             if itemID is not None and itemInInventory:
-                inventoryCopy = deepcopy(players[id]['inv'])
-                for i in inventoryCopy:
+                for i in players[id]['inv']:
                     if int(i) == itemID:
                         # Remove first matching item from inventory
                         players[id]['inv'].remove(i)
