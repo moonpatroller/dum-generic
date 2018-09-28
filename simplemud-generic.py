@@ -3,7 +3,6 @@
 
 from cmsg import cmsg
 
-from functions import getFreeKey
 from functions import log
 
 import time
