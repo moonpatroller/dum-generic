@@ -673,8 +673,10 @@ while True:
         # TODO: IDEA - Some sort of a timer to have the character remain in the game for some time after disconnection?
 
         # Filter out fights with disconnected player
-        fights = {fight_id: fight for fight_id, fight in fights.items() if fight['s1'] != player_name and fight['s2'] != player_name}
-
+        fights = {
+            fight_id: fight for fight_id, fight in fights.items() 
+            if fight['s1'] != player_name and fight['s2'] != player_name
+        }
 
         # remove the player's entry in the player dictionary
         del players[id]
