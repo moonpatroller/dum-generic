@@ -471,33 +471,37 @@ while True:
                         mud.send_message(pid, msg)
             npc['timeTalked'] =  now
         # Iterate through fights and see if anyone is attacking an NPC - if so, attack him too if not in combat (TODO: and isAggressive = true)
-        for (fid, fight) in fights.items():
-            if fight['s2id'] == nid and npcs[fight['s2id']]['isInCombat'] == 1 and fight['s1type'] == 'pc' and fight['retaliated'] == 0:
+        for fight in fights.values():
+            fs1id = fight['s1id']
+            fs2id = fight['s2id']
+            npc2 = npcs[fs2id]
+
+            if fs2id == nid and npc2['isInCombat'] == 1 and fight['s1type'] == 'pc' and fight['retaliated'] == 0:
                 # print('player is attacking npc')
                 # BETA: set las combat action to now when attacking a player
-                npcs[fight['s2id']]['lastCombatAction'] = int(time.time())
+                npc2['lastCombatAction'] = int(time.time())
                 fight['retaliated'] = 1
-                npcs[fight['s2id']]['isInCombat'] = 1
+                npc2['isInCombat'] = 1
                 fights[len(fights)] = {
-                    's1': npcs[fight['s2id']]['name'],
-                    's2': players[fight['s1id']]['name'],
+                    's1': npc2['name'],
+                    's2': players[fs1id]['name'],
                     's1id': nid,
-                    's2id': fight['s1id'],
+                    's2id': fs1id,
                     's1type': 'npc',
                     's2type': 'pc',
                     'retaliated': 1
                 }
-            elif fight['s2id'] == nid and npcs[fight['s2id']]['isInCombat'] == 1 and fight['s1type'] == 'npc' and fight['retaliated'] == 0:
+            elif fs2id == nid and npc2['isInCombat'] == 1 and fight['s1type'] == 'npc' and fight['retaliated'] == 0:
                 # print('npc is attacking npc')
                 # BETA: set las combat action to now when attacking a player
-                npcs[fight['s2id']]['lastCombatAction'] = int(time.time())
+                npc2['lastCombatAction'] = int(time.time())
                 fight['retaliated'] = 1
-                npcs[fight['s2id']]['isInCombat'] = 1
+                npc2['isInCombat'] = 1
                 fights[len(fights)] = {
-                    's1': npcs[fight['s2id']]['name'],
-                    's2': players[fight['s1id']]['name'], 
+                    's1': npc2['name'],
+                    's2': players[fs1id]['name'], 
                     's1id': nid, 
-                    's2id': fight['s1id'], 
+                    's2id': fs1id, 
                     's1type': 'npc', 
                     's2type': 'npc', 
                     'retaliated': 1
@@ -518,7 +522,7 @@ while True:
             npc['hp'] = npcsTemplate[nid]['hp']
 
     # Iterate through ENV elements and see if it's time to send a message to players in the same room as the ENV elements
-    for (eid, e) in env.items():
+    for e in env.values():
         now = int(time.time())
         if now > e['timeTalked'] + e['talkDelay']:
             rnd = randint(0, len(e['vocabulary']) - 1)
