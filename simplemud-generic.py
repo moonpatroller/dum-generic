@@ -1,25 +1,15 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-from cmsg import cmsg
-
-from functions import log
-
+import pymysql
 import time
 
-# import the database library
-import pymysql
-
-# import the MUD server class
-from mudserver import MudServer
-
-# import random generator library
+from copy import deepcopy
 from random import randint
 
-# import the deepcopy library
-from copy import deepcopy
-
-log("", "Server Boot")
+from cmsg import cmsg
+from functions import log
+from mudserver import MudServer
 
 
 def fetch_npcs(db_conn):
@@ -219,6 +209,9 @@ def create_corpse(body):
     }
 
 
+log("", "Server Boot")
+
+
 # Load rooms
 rooms = {
     '$rid=0$': {'description': 'You wake up in your private quarter aboard the Mariner spacecraft. Your room is dark, the only source of light being a wall screen displaying current time of day on Earth. You can hear a distant hum of ventilation equipment and a characteristic buzz of FTL engines, currently pushing you through a vast, unknown expand of space.',
@@ -244,26 +237,15 @@ rooms = {
 
 log("Rooms loaded: " + str(len(rooms)), "info")
 
-# Load NPCs
-npcs = {}
-
 # Declare NPCs master (template) tuple
 npcsTemplate = {}
 
-# Declare env tuple
-env = {}
-
-# Declare fights tuple
-fights = {}
-
-# Declare corpses tuple
 corpses = {}
-
-# Declare items tuple
+env = {}
+fights = {}
 itemsDB = {}
-
-# Declare itemsInWorld tuple
 itemsInWorld = {}
+npcs = {}
 
 # Declare number of seconds to elapse between State Saves
 # A State Save takes values held in memory and updates the database
