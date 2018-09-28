@@ -375,7 +375,7 @@ while True:
                 pl['hp'] = 4
 
     # Handle Fights
-    for (fid, fighter) in fights.items():
+    for fighter in fights.values():
         # PC -> PC
         s1id = fighter['s1id']
         s2id = fighter['s2id']
