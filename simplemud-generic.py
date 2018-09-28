@@ -212,13 +212,13 @@ def save_players(db_conn, players):
 
 def create_corpse(body):
     return { 
-    'room': body['room'], 
-    'name': str(body['name'] + '`s corpse'), 
-    'inv' : body['inv'], 
-    'died': int(time.time()), 
-    'TTL' : body['corpseTTL'], 
-    'owner': 1
-  }
+        'room': body['room'], 
+        'name': str(body['name'] + '`s corpse'), 
+        'inv' : body['inv'], 
+        'died': int(time.time()), 
+        'TTL' : body['corpseTTL'], 
+        'owner': 1
+    }
 
 
 # Load rooms
