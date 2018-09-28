@@ -12,6 +12,23 @@ from functions import log
 from mudserver import MudServer
 
 
+def fetch_env_vars(db_cursor):
+    # Fetch tbl_ENV and populate env[]
+    db_cursor.execute("SELECT * FROM tbl_ENV")
+    db_response = cursor.fetchall()
+    env = {}
+    for en in db_response:
+        env[en[0]] = {
+        'name': en[1],
+        'room': en[2],
+        'vocabulary': en[3].split('|'),
+        'talkDelay': en[4],
+        'timeTalked': int(time.time()),
+        'lastSaid': 0,
+    }
+    return env
+
+
 def fetch_npcs(db_conn):
     db_cursor = db_conn.cursor(pymysql.cursors.DictCursor)
     db_cursor.execute("SELECT * FROM tbl_NPC;")
@@ -273,42 +290,11 @@ log("NPCs loaded: " + str(len(npcs)), "info")
 # Deepcopy npcs fetched from a database into a master template
 npcsTemplate = deepcopy(npcs)
 
-# List NPC dictionary for debigging purposes
-# for x in npcs:
-    # print (x)
-    # for y in npcs[x]:
-        # print (y,':',npcs[x][y])
-
-# Fetch tbl_ENV and populate env[]
-cursor.execute("SELECT * FROM tbl_ENV")
-dbResponse = cursor.fetchall()
-
-for en in dbResponse:
-    env[en[0]] = {
-    'name': en[1],
-    'room': en[2],
-    'vocabulary': en[3].split('|'),
-    'talkDelay': en[4],
-    'timeTalked': int(time.time()),
-        'lastSaid': 0,
-    }
-
+env = fetch_env_vars(cursor)
 log("Environment Actors loaded: " + str(len(env)), "info")
-    # List ENV dictionary for debigging purposes
-    # for x in env:
-        # print (x)
-        # for y in env[x]:
-            # print (y,':',env[x][y])
 
-# Fetch tbl_Items and populate itemsDB[]
 itemsDB = fetch_all_items(cnxn)
-
 log("Items loaded: " + str(len(itemsDB)), "info")
-# List items DB for debugging purposes
-# for x in itemsDB:
-    # print (x)
-    # for y in itemsDB[x]:
-        # print(y,':',itemsDB[x][y])
 
 # Put some items in the world for testing and debugging
 itemsInWorld['$rid=1$'] = [
