@@ -175,7 +175,7 @@ while True:
 
     # Handle Player Deaths
     for (pid, pl) in players.items():
-        if pl['authenticated'] == True:
+        if pl['authenticated']:
             if pl['hp'] <= 0:
                 # Create player's corpse in the room
                 corpses.append(create_corpse(pl))
@@ -219,7 +219,7 @@ while True:
                         if randint(0, 1) == 1:
                             modifier = randint(0, 10)
                             if player_1['hp'] > 0:
-                                player_2['hp'] = player_2['hp'] - (player_1['str'] + modifier)
+                                player_2['hp'] -= player_1['str'] + modifier
                                 player_1['lastCombatAction'] = now
                                 mud.send_message(s1id, 'You manage to hit <f32><u>' + player_2['name'] + '<r> for <f0><b2>' + 
                                     str(player_1['str'] + modifier) + '<r> points of damage.')
@@ -253,7 +253,7 @@ while True:
                         if randint(0, 1) == 1:
                             modifier = randint(0, 10)
                             if player_1['hp'] > 0:
-                                npc_2['hp'] = npc_2['hp'] - (player_1['str'] + modifier)
+                                npc_2['hp'] -= player_1['str'] + modifier
                                 player_1['lastCombatAction'] = now
                                 mud.send_message(s1id, 'You manage to hit <f21><u>' + npc_2['name'] + '<r> for <b2><f0>' + 
                                     str(player_1['str'] + modifier)  + '<r> points of damage')
@@ -280,7 +280,7 @@ while True:
                     if randint(0, 1) == 1:
                         modifier = randint(0, 10)
                         if npc_1['hp'] > 0:
-                            player_2['hp'] = player_2['hp'] - (npc_1['str'] + modifier)
+                            player_2['hp'] -= npc_1['str'] + modifier
                             npc_1['lastCombatAction'] = now
                             mud.send_message(s2id, '<f21><u>' + npc_1['name'] + '<r> has managed to hit you for <f15><b88>' + 
                                 str(npc_1['str'] + modifier) + '<r> points of damage.')
