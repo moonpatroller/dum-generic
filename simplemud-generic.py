@@ -1,6 +1,6 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
-
+import random
 import time
 
 from copy import deepcopy
@@ -235,12 +235,10 @@ while True:
     for (nid, npc) in npcs.items():
         # Check if any player is in the same room, then send a random message to them
         if now > npc['timeTalked'] + npc['talkDelay']:
-            rnd = randint(0, len(npc['vocabulary']) - 1)
             for (pid, pl) in players.items():
                 if npc['room'] == pl['room']:
                     if len(npc['vocabulary']) > 1:
-                        #mud.send_message(pid, npc['vocabulary'][rnd])
-                        msg = '<f21><u>' + npc['name'] + '<r> says: <f86>' + npc['vocabulary'][rnd]
+                        msg = '<f21><u>' + npc['name'] + '<r> says: <f86>' + random.choice(npc['vocabulary'])
                         mud.send_message(pid, msg)
                     else:
                         #mud.send_message(pid, npc['vocabulary'][0])
@@ -301,11 +299,10 @@ while True:
     # Iterate through ENV elements and see if it's time to send a message to players in the same room as the ENV elements
     for e in env.values():
         if now > e['timeTalked'] + e['talkDelay']:
-            rnd = randint(0, len(e['vocabulary']) - 1)
             for (pid, pl) in players.items():
                 if e['room'] == pl['room']:
                     if len(e['vocabulary']) > 1:
-                        msg = '<f58>[' + e['name'] + ']: <f236>' + e['vocabulary'][rnd]
+                        msg = '<f58>[' + e['name'] + ']: <f236>' + random.choice(e['vocabulary'])
                         mud.send_message(pid, msg)
                     else:
                         msg = '<f58>[' + e['name'] + ']: <f236>' + e['vocabulary'][0]
