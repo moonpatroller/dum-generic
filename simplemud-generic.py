@@ -12,6 +12,29 @@ from mudserver import MudServer
 from DB import DB
 
 
+def respawn_npcs(npcs, npcsTemplate):
+    # Handle NPC respawns
+    for (nid, npc) in npcs.items():
+        if npc['whenDied'] is not None and now >= npc['whenDied'] + npc['respawn']:
+            npc['whenDied'] = None
+            npc['room'] = npcsTemplate[nid]['room']
+            # print("respawning " + npcs[nid]['name'])
+
+def pump_env_messages(env, players, mud, now):
+    # Iterate through ENV elements and see if it's time to send a message to players in the same room as the ENV elements
+    for e in env.values():
+        if now > e['timeTalked'] + e['talkDelay']:
+            for (pid, pl) in players.items():
+                if e['room'] == pl['room']:
+                    if len(e['vocabulary']) > 1:
+                        msg = '<f58>[' + e['name'] + ']: <f236>' + random.choice(e['vocabulary'])
+                        mud.send_message(pid, msg)
+                    else:
+                        msg = '<f58>[' + e['name'] + ']: <f236>' + e['vocabulary'][0]
+                        mud.send_message(pid, msg)
+            e['timeTalked'] = now
+
+
 def create_corpse(body):
     return { 
         'room': body['room'], 
@@ -81,16 +104,16 @@ DBdatabase = '<database>'
 log("Connecting to database", "info")
 db = DB(DBhost, DBport, DBuser, DBpasswd, DBdatabase)
 
-npcs = DB.fetch_npcs(cnxn)
+npcs = db.fetch_npcs(cnxn)
 log("NPCs loaded: " + str(len(npcs)), "info")
 
 # Deepcopy npcs fetched from a database into a master template
 npcsTemplate = deepcopy(npcs)
 
-env = DB.fetch_env_vars()
+env = db.fetch_env_vars()
 log("Environment Actors loaded: " + str(len(env)), "info")
 
-itemsDB = DB.fetch_all_items(cnxn)
+itemsDB = db.fetch_all_items(cnxn)
 log("Items loaded: " + str(len(itemsDB)), "info")
 
 # Put some items in the world for testing and debugging
@@ -121,7 +144,7 @@ while True:
         # print("[info] Saving player state")
         
         # State Save logic
-        Db.save_players(players)
+        db.save_players(players)
         lastStateSave = now
 
     # Handle Player Deaths
@@ -296,28 +319,15 @@ while True:
             npc['room'] = None
             npc['hp'] = npcsTemplate[nid]['hp']
 
-    # Iterate through ENV elements and see if it's time to send a message to players in the same room as the ENV elements
-    for e in env.values():
-        if now > e['timeTalked'] + e['talkDelay']:
-            for (pid, pl) in players.items():
-                if e['room'] == pl['room']:
-                    if len(e['vocabulary']) > 1:
-                        msg = '<f58>[' + e['name'] + ']: <f236>' + random.choice(e['vocabulary'])
-                        mud.send_message(pid, msg)
-                    else:
-                        msg = '<f58>[' + e['name'] + ']: <f236>' + e['vocabulary'][0]
-                        mud.send_message(pid, msg)
-            e['timeTalked'] =  now
+    pump_env_messages(env, players, mud, now)
 
     # Keep corpses not older than their TTL
-    corpses = {id: corpse for id, corpse in corpses.items() if now < corpse['died'] + corpse['TTL']}
+    corpses = {
+        id: corpse for id, corpse in corpses.items() 
+        if now < corpse['died'] + corpse['TTL']
+    }
 
-    # Handle NPC respawns
-    for (nid, npc) in npcs.items():
-        if npc['whenDied'] is not None and now >= npc['whenDied'] + npc['respawn']:
-            npc['whenDied'] = None
-            npc['room'] = npcsTemplate[nid]['room']
-            # print("respawning " + npcs[nid]['name'])
+    respawn_npcs(npcs, npcsTemplate)
 
     # go through any newly connected players
     for id in mud.get_new_players():
@@ -410,7 +420,7 @@ while True:
         # Code here to save player to the database after he's disconnected and before removing him from players dictionary
         if players[id]['authenticated'] is not None:
             log("Player disconnected, saving state", "info")
-            Db.save_player(players[id])
+            db.save_player(players[id])
 
         # TODO: IDEA - Some sort of a timer to have the character remain in the game for some time after disconnection?
 
