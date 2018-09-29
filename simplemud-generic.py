@@ -51,26 +51,52 @@ log("", "Server Boot")
 
 # Load rooms
 rooms = {
-    '$rid=0$': {'description': 'You wake up in your private quarter aboard the Mariner spacecraft. Your room is dark, the only source of light being a wall screen displaying current time of day on Earth. You can hear a distant hum of ventilation equipment and a characteristic buzz of FTL engines, currently pushing you through a vast, unknown expand of space.',
-                'exits': {'door': '$rid=1$', 'bathroom': '$rid=4$'},
-                'name': 'Private Quarter'},
-    '$rid=1$': {'description': 'You are standing in a wide corridor, which circles around the second level of the craft. Private quarters of other crew members are located on this level. A broken ceiling light flickers every few seconds. The air pumped through the vents is chilly and refreshing.',
-                'exits': {'quarter door': '$rid=0$',
-                'north': '$rid=2$', 'south': '$rid=3$'},
-                'name': 'Corridor'},
-    '$rid=2$': {'description': 'You are in a corridor. It ends here abruptly with a dead end.',
-                'exits': {'south': '$rid=1$'},
-                'name': 'Corridor'},
-    '$rid=3$': {'description': "You are standing in the middle of a wide corridor. It's impossible to venture further south, a pile of rubble is blocking the way.",
-                'exits': {'north': '$rid=1$'},
-                'name': 'Corridor'},
-    '$rid=4$': {'description': 'You are standing in a tiny bathroom, which is part of a private quarter aboard Mariner. Only bare essentials here, certainly nothing luxurious.',
-                'exits': {'door': '$rid=0$'},
-                'name': 'Small Bathroom'},
-    '$rid=666$': {'description': 'Void. This is how you would describe your surroundings. You realise you cannot see your physical body and somehow it feels like you are not ACTUALLY there in a physical sense. It`s unbelievably bright here. You can see a slightly darker patch in a distance. It almost looks like an open rift, a tear in whatever fabric the environment is made of.',
-                'exits': {'rift': '$rid=0$'},
-                'name': 'Void'},
-    }
+    '$rid=0$': {
+        'description': 'You wake up in your private quarter aboard the Mariner spacecraft. Your room is dark, the only source of light being a wall screen displaying current time of day on Earth. You can hear a distant hum of ventilation equipment and a characteristic buzz of FTL engines, currently pushing you through a vast, unknown expand of space.',
+        'exits': {
+            'door': '$rid=1$', 
+            'bathroom': '$rid=4$'
+        },
+        'name': 'Private Quarter'
+    },
+    '$rid=1$': {
+        'description': 'You are standing in a wide corridor, which circles around the second level of the craft. Private quarters of other crew members are located on this level. A broken ceiling light flickers every few seconds. The air pumped through the vents is chilly and refreshing.',
+        'exits': {
+            'quarter door': '$rid=0$',
+            'north': '$rid=2$', 
+            'south': '$rid=3$'
+        },
+        'name': 'Corridor'
+    },
+    '$rid=2$': {
+        'description': 'You are in a corridor. It ends here abruptly with a dead end.',
+        'exits': {
+            'south': '$rid=1$'
+        },
+        'name': 'Corridor'
+    },
+    '$rid=3$': {
+        'description': "You are standing in the middle of a wide corridor. It's impossible to venture further south, a pile of rubble is blocking the way.",
+        'exits': {
+            'north': '$rid=1$'
+        },
+        'name': 'Corridor'
+    },
+    '$rid=4$': {
+        'description': 'You are standing in a tiny bathroom, which is part of a private quarter aboard Mariner. Only bare essentials here, certainly nothing luxurious.',
+        'exits': {
+            'door': '$rid=0$'
+        },
+        'name': 'Small Bathroom'
+    },
+    '$rid=666$': {
+        'description': 'Void. This is how you would describe your surroundings. You realise you cannot see your physical body and somehow it feels like you are not ACTUALLY there in a physical sense. It`s unbelievably bright here. You can see a slightly darker patch in a distance. It almost looks like an open rift, a tear in whatever fabric the environment is made of.',
+        'exits': {
+            'rift': '$rid=0$'
+        },
+        'name': 'Void'
+    },
+}
 
 log("Rooms loaded: " + str(len(rooms)), "info")
 
@@ -195,8 +221,10 @@ while True:
                             if player_1['hp'] > 0:
                                 player_2['hp'] = player_2['hp'] - (player_1['str'] + modifier)
                                 player_1['lastCombatAction'] = now
-                                mud.send_message(s1id, 'You manage to hit <f32><u>' + player_2['name'] + '<r> for <f0><b2>' + str(player_1['str'] + modifier) + '<r> points of damage.')
-                                mud.send_message(s2id, '<f32>' + player_1['name'] + '<r> has managed to hit you for <f15><b88>' + str(player_1['str'] + modifier) + '<r> points of damage.')
+                                mud.send_message(s1id, 'You manage to hit <f32><u>' + player_2['name'] + '<r> for <f0><b2>' + 
+                                    str(player_1['str'] + modifier) + '<r> points of damage.')
+                                mud.send_message(s2id, '<f32>' + player_1['name'] + '<r> has managed to hit you for <f15><b88>' + 
+                                    str(player_1['str'] + modifier) + '<r> points of damage.')
                                 # print('----------')
                                 # print(player_1['name'] + ': ' + str(player_1['hp']))
                                 # print(player_2['name'] + ': ' + str(player_2['hp']))
@@ -205,9 +233,13 @@ while True:
                             mud.send_message(s1id, 'You miss trying to hit <f32><u>' + player_2['name'] + '')
                             mud.send_message(s2id, '<f32><u>' + player_1['name'] + '<r> missed while trying to hit you!')
                     else:
-                        mud.send_message(s1id, '<f225>Suddnely you stop. It wouldn`t be a good idea to attack <f32>' + player_2['name'] + ' at this time.')
+                        mud.send_message(s1id, '<f225>Suddnely you stop. It wouldn`t be a good idea to attack <f32>' + 
+                            player_2['name'] + ' at this time.')
 
-                        fights = {fight_id: fight for fight_id, fight in fights.items() if fight['s1id'] != s1id or fight['s2id'] != s2id}
+                        fights = {
+                            fight_id: fight for fight_id, fight in fights.items() 
+                            if fight['s1id'] != s1id or fight['s2id'] != s2id
+                        }
 
         # PC -> NPC
         elif fighter['s1type'] == 'pc' and fighter['s2type'] == 'npc':
@@ -223,14 +255,19 @@ while True:
                             if player_1['hp'] > 0:
                                 npc_2['hp'] = npc_2['hp'] - (player_1['str'] + modifier)
                                 player_1['lastCombatAction'] = now
-                                mud.send_message(s1id, 'You manage to hit <f21><u>' + npc_2['name'] + '<r> for <b2><f0>' + str(player_1['str'] + modifier)  + '<r> points of damage')
+                                mud.send_message(s1id, 'You manage to hit <f21><u>' + npc_2['name'] + '<r> for <b2><f0>' + 
+                                    str(player_1['str'] + modifier)  + '<r> points of damage')
                                 # print(npc_2['hp'])
                         else:
                             player_1['lastCombatAction'] = now
                             mud.send_message(s1id, 'You miss <u><f21>' + npc_2['name'] + '<r> completely!')
                     else:
-                        mud.send_message(s1id, '<f225>Suddenly you stop. It wouldn`t be a good idea to attack <u><f21>' + npc_2['name'] + '<r> at this time.')
-                        fights = {fight_id: fight for fight_id, fight in fights.items() if fight['s1id'] != s1id or fight['s2id'] != s2id}
+                        mud.send_message(s1id, '<f225>Suddenly you stop. It wouldn`t be a good idea to attack <u><f21>' + 
+                            npc_2['name'] + '<r> at this time.')
+                        fights = {
+                            fight_id: fight for fight_id, fight in fights.items() 
+                            if fight['s1id'] != s1id or fight['s2id'] != s2id
+                        }
 
         # NPC -> PC
         elif fighter['s1type'] == 'npc' and fighter['s2type'] == 'pc':
@@ -245,7 +282,8 @@ while True:
                         if npc_1['hp'] > 0:
                             player_2['hp'] = player_2['hp'] - (npc_1['str'] + modifier)
                             npc_1['lastCombatAction'] = now
-                            mud.send_message(s2id, '<f21><u>' + npc_1['name'] + '<r> has managed to hit you for <f15><b88>' + str(npc_1['str'] + modifier) + '<r> points of damage.')
+                            mud.send_message(s2id, '<f21><u>' + npc_1['name'] + '<r> has managed to hit you for <f15><b88>' + 
+                                str(npc_1['str'] + modifier) + '<r> points of damage.')
                     else:
                         npc_1['lastCombatAction'] = now
                         mud.send_message(s2id, '<f21><u>' + npc_1['name'] + '<r> has missed you completely!')
@@ -268,7 +306,8 @@ while True:
                         msg = '<f21><u>' + npc['name'] + '<r> says: <f86>' + npc['vocabulary'][0]
                         mud.send_message(pid, msg)
             npc['timeTalked'] =  now
-        # Iterate through fights and see if anyone is attacking an NPC - if so, attack him too if not in combat (TODO: and isAggressive = true)
+        # Iterate through fights and see if anyone is attacking an NPC - 
+        # if so, attack him too if not in combat (TODO: and isAggressive = true)
         for fight in fights.values():
             fs1id = fight['s1id']
             fs2id = fight['s2id']
@@ -304,7 +343,8 @@ while True:
                     's2type': 'npc', 
                     'retaliated': 1
                 }
-        # Check if NPC is still alive, if not, remove from room and create a corpse, set isInCombat to 0, set whenDied to now and remove any fights NPC was involved in
+        # Check if NPC is still alive, if not, remove from room and create a corpse, set isInCombat to 0, 
+        # set whenDied to now and remove any fights NPC was involved in
         if npc['hp'] <= 0:
             npc['isInCombat'] = 0
             npc['lastRoom'] = npc['room']
@@ -629,7 +669,8 @@ while True:
                     if targetFound == False:
                         mud.send_message(id, 'You cannot see ' + target + ' anywhere nearby.')
                 else:
-                    mud.send_message(id, 'You attempt hitting yourself and realise this might not be the most productive way of using your time.')
+                    mud.send_message(id, 
+                        'You attempt hitting yourself and realise this might not be the most productive way of using your time.')
             else:
                 if type(currentTarget) is not int:
                     mud.send_message(id, 'You are already attacking ' + currentTarget)
@@ -758,7 +799,8 @@ while True:
                     break
 
             if itemPickedUp:
-                mud.send_message(id, 'You pick up and place ' + itemsDB[item_id]['article'] + ' ' + itemsDB[item_id]['name'] + ' in your inventory.')
+                mud.send_message(id, 'You pick up and place ' + itemsDB[item_id]['article'] + 
+                    ' ' + itemsDB[item_id]['name'] + ' in your inventory.')
             else:
                 mud.send_message(id, 'You cannot see ' + str(params) + ' anywhere.')
 
