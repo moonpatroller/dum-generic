@@ -50,6 +50,10 @@ def get_players_in_room(room_id):
     return ((pid, pl) for (pid, pl) in players.items() if pl['room'] != room_id)
 
 
+def get_npcs_in_room(room_id):
+    return ((npc_id, npc) for (npc_id, npc) in npcs.items() if npc['room'] != room_id)
+
+
 def set_fights(fs):
     global fights
     fights = fs
@@ -490,9 +494,7 @@ while True:
                 ]
                 +
                 ##### Show NPCs in the room #####
-                [npc['name'] for (npc_id, npc) in npcs.items()
-                 if npc['room'] == player_room_id
-                ]
+                [npc['name'] for (npc_id, npc) in get_npcs_in_room(player_room_id)]
             )
 
             itemshere = []
@@ -525,7 +527,7 @@ while True:
                     isAlreadyAttacking = True
                     currentTarget = fighter['s2']
 
-            if isAlreadyAttacking == False:
+            if not isAlreadyAttacking:
                 if current_player['name'].lower() != target.lower():
                     for (pid, pl) in players.items():
                         if pl['name'].lower() == target.lower():
@@ -547,30 +549,27 @@ while True:
                                 targetFound = False
 
                     # mud.send_message(id, 'You cannot see ' + target + ' anywhere nearby.|')
-                    if targetFound == False:
-                        for (nid, npc) in npcs.items():
+                    if not targetFound:
+                        for (nid, npc) in get_npcs_in_room(player_room_id):
                             if npc['name'].lower() == target.lower():
                                 victimId = nid
                                 attackerId = id
                                 # print('found target npc')
-                                if npc['room'] == player_room_id and targetFound == False:
+                                if not targetFound:
                                     targetFound = True
                                     # print('target found!')
-                                    if player_room_id == npc['room']:
-                                        fights[len(fights)] = {
-                                            's1': current_player['name'], 
-                                            's2': nid, 
-                                            's1id': attackerId, 
-                                            's2id': victimId, 
-                                            's1type': 'pc', 
-                                            's2type': 'npc', 
-                                            'retaliated': 0
-                                        }
-                                        mud.send_message(id, 'Attacking <u><f21>' + npc['name'] + '<r>!')
-                                    else:
-                                        pass
+                                    fights[len(fights)] = {
+                                        's1': current_player['name'], 
+                                        's2': nid, 
+                                        's1id': attackerId, 
+                                        's2id': victimId, 
+                                        's1type': 'pc', 
+                                        's2type': 'npc', 
+                                        'retaliated': 0
+                                    }
+                                    mud.send_message(id, 'Attacking <u><f21>' + npc['name'] + '<r>!')
 
-                    if targetFound == False:
+                    if not targetFound:
                         mud.send_message(id, 'You cannot see ' + target + ' anywhere nearby.')
                 else:
                     mud.send_message(id, 
