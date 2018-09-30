@@ -94,7 +94,7 @@ class DB:
 
     def fetch_player_name(self, name):
         db_cursor = self.db_conn.cursor()
-        db_cursor.execute("SELECT name FROM tbl_Players WHERE name = %s ;", (name, ))
+        db_cursor.execute("SELECT name FROM tbl_Players WHERE name = ? ;", (name, ))
         row = db_cursor.fetchone()
         db_cursor.close()
         return row
@@ -107,10 +107,10 @@ class DB:
                 SELECT * 
                 FROM tbl_Players 
                 WHERE 
-                    name = %s
-                    AND password = %s
+                    name = ?
+                    AND password = ?
                 ;
-            ''', (name, password))
+            ''', name, password)
         db_response = db_cursor.fetchone()
         db_cursor.close()
 
