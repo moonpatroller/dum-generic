@@ -421,21 +421,23 @@ while True:
 
         # send the new player a prompt for their name
         # mud.send_message(id, 'Connected to server!')
-        mud.send_message(id, "<f250><b25> ______            _______ ")
-        mud.send_message(id, "<f250><b25>(  __  \ |\     /|(       )")
-        mud.send_message(id, "<f250><b25>| (  \  )| )   ( || () () |")
-        mud.send_message(id, "<f250><b25>| |   ) || |   | || || || |")
-        mud.send_message(id, "<f250><b25>| |   | || |   | || |(_)| |")
-        mud.send_message(id, "<f250><b25>| |   ) || |   | || |   | |")
-        mud.send_message(id, "<f250><b25>| (__/  )| (___) || )   ( |")
-        mud.send_message(id, "<f250><b25>(______/ (_______)|/     \|")
-        mud.send_message(id, " ")
-        mud.send_message(id, "<f250><b25> a modern MU* engine       ")
-        mud.send_message(id, "<f15><b25>    dumengine.wikidot.com  ")
-        mud.send_message(id, " ")
-        mud.send_message(id, "<f250><b25> Development Server 1       ")
-        mud.send_message(id, " ")
-        mud.send_message(id, '<f15>What is your username?')
+        mud.send_message(id, 
+            ("<f250><b25> ______            _______ \n\r"
+             "<f250><b25>(  __  \\ |\\     /|(       )\n\r"
+             "<f250><b25>| (  \\  )| )   ( || () () |\n\r"
+             "<f250><b25>| |   ) || |   | || || || |\n\r"
+             "<f250><b25>| |   | || |   | || |(_)| |\n\r"
+             "<f250><b25>| |   ) || |   | || |   | |\n\r"
+             "<f250><b25>| (__/  )| (___) || )   ( |\n\r"
+             "<f250><b25>(______/ (_______)|/     \\|\n\r"
+             " \n\r"
+             "<f250><b25> a modern MU* engine      \n\r"
+             "<f15><b25>    dumengine.wikidot.com  \n\r"
+             " \n\r"
+             "<f250><b25> Development Server 1       \n\r"
+             " \n\r"
+             '<f15>What is your username?\n\r')
+
         log("Client ID: " + str(id) + " has connected", "info")
 
     # go through any recently disconnected players
@@ -515,8 +517,9 @@ while True:
 
                 # send the new player a welcome message
                 mud.send_message(id, '<f15>Welcome to the game, {}. '.format(current_player['name']))
-                mud.send_message(id, '<f15>-------------------------------------------------')
-                mud.send_message(id, "<f15>Type 'help' for a list of commands. Have fun!")
+                mud.send_message(id, 
+                    ('<f15>-------------------------------------------------\n\r'
+                     "<f15>Type 'help' for a list of commands. Have fun!")
 
                 # send the new player the description of their current room
                 # print('about to send room description...')
@@ -529,15 +532,17 @@ while True:
         elif command.lower() == 'help':
         # 'help' command
             # send the player back the list of possible commands
-            mud.send_message(id, 'Commands:')
-            mud.send_message(id, '  say <message>    - Says something out loud, '  + "e.g. 'say Hello'")
-            mud.send_message(id, '  look             - Examines the ' + "surroundings, e.g. 'look'")
-            mud.send_message(id, '  go <exit>        - Moves through the exit ' + "specified, e.g. 'go outside'")
-            mud.send_message(id, '  attack <target>  - attack target ' + "specified, e.g. 'attack cleaning bot'")
-            mud.send_message(id, '  check inventory  - check the contents of ' + "your inventory")
-            mud.send_message(id, '  take <item>      - pick up an item lying ' + "on the floor")
-            mud.send_message(id, '  drop <item>      - drop an item from your inventory ' + "on the floor")
-            mud.send_message(id, '  colortest        - showcase client`s ability to display ' + "colorful text")
+            mud.send_message(id, 
+                ('Commands:\n\r'
+                 '  say <message>    - Says something out loud, '  + "e.g. 'say Hello'\n\r"
+                 '  look             - Examines the ' + "surroundings, e.g. 'look'\n\r"
+                 '  go <exit>        - Moves through the exit ' + "specified, e.g. 'go outside'\n\r"
+                 '  attack <target>  - attack target ' + "specified, e.g. 'attack cleaning bot'\n\r"
+                 '  check inventory  - check the contents of your inventory\n\r'
+                 '  take <item>      - pick up an item lying on the floor\n\r'
+                 '  drop <item>      - drop an item from your inventory on the floor\n\r'
+                 '  colortest        - showcase client`s ability to display colorful text\n\r')
+            )
             
         elif command.lower() == 'say':
         # 'say' command
@@ -753,12 +758,6 @@ while True:
                   'owner': id 
                 })
                 
-                # Print itemsInWorld to console for debugging purposes
-                # for x in itemsInWorld:
-                    # print (x)
-                    # for y in itemsInWorld[x]:
-                            # print(y,':',itemsInWorld[x][y])
-                            
                 mud.send_message(id, 'You drop ' + itemsDB[int(i)]['article'] + ' ' + itemsDB[int(i)]['name'] + ' on the floor.')
                 
             else:
@@ -787,7 +786,7 @@ while True:
                 mud.send_message(id, 'You cannot see ' + str(params) + ' anywhere.')
 
         else:
-        # some other, unrecognised command
+            # some other, unrecognised command
             # send back an 'unknown command' message
             mud.send_message(id, "Unknown command '{}'".format(command))
 
