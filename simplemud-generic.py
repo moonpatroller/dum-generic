@@ -1,5 +1,6 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
+import json
 import random
 import time
 
@@ -63,53 +64,8 @@ log("", "Server Boot")
 
 
 # Load rooms
-rooms = {
-    '$rid=0$': {
-        'description': 'You wake up in your private quarter aboard the Mariner spacecraft. Your room is dark, the only source of light being a wall screen displaying current time of day on Earth. You can hear a distant hum of ventilation equipment and a characteristic buzz of FTL engines, currently pushing you through a vast, unknown expand of space.',
-        'exits': {
-            'door': '$rid=1$', 
-            'bathroom': '$rid=4$'
-        },
-        'name': 'Private Quarter'
-    },
-    '$rid=1$': {
-        'description': 'You are standing in a wide corridor, which circles around the second level of the craft. Private quarters of other crew members are located on this level. A broken ceiling light flickers every few seconds. The air pumped through the vents is chilly and refreshing.',
-        'exits': {
-            'quarter door': '$rid=0$',
-            'north': '$rid=2$', 
-            'south': '$rid=3$'
-        },
-        'name': 'Corridor'
-    },
-    '$rid=2$': {
-        'description': 'You are in a corridor. It ends here abruptly with a dead end.',
-        'exits': {
-            'south': '$rid=1$'
-        },
-        'name': 'Corridor'
-    },
-    '$rid=3$': {
-        'description': "You are standing in the middle of a wide corridor. It's impossible to venture further south, a pile of rubble is blocking the way.",
-        'exits': {
-            'north': '$rid=1$'
-        },
-        'name': 'Corridor'
-    },
-    '$rid=4$': {
-        'description': 'You are standing in a tiny bathroom, which is part of a private quarter aboard Mariner. Only bare essentials here, certainly nothing luxurious.',
-        'exits': {
-            'door': '$rid=0$'
-        },
-        'name': 'Small Bathroom'
-    },
-    '$rid=666$': {
-        'description': 'Void. This is how you would describe your surroundings. You realise you cannot see your physical body and somehow it feels like you are not ACTUALLY there in a physical sense. It`s unbelievably bright here. You can see a slightly darker patch in a distance. It almost looks like an open rift, a tear in whatever fabric the environment is made of.',
-        'exits': {
-            'rift': '$rid=0$'
-        },
-        'name': 'Void'
-    },
-}
+with open("rooms.json", "r") as read_file:
+    rooms = json.load(read_file)
 
 log("Rooms loaded: " + str(len(rooms)), "info")
 
