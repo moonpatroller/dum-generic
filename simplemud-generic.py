@@ -90,16 +90,16 @@ log("State Save interval: " + str(stateSaveInterval) + " seconds", "info")
 lastStateSave = int(time.time())
 
 # Database connection details
-DBhost = 'localhost'
-DBport = 3306
-DBuser = '<user>'
-DBpasswd = '<password>'
-DBdatabase = '<database>'
+# DBhost = 'localhost'
+# DBport = 3306
+# DBuser = '<user>'
+# DBpasswd = '<password>'
+# DBdatabase = '<database>'
 
 log("Connecting to database", "info")
-db = DB(DBhost, DBport, DBuser, DBpasswd, DBdatabase)
+db = DB('sample.db') # DBhost, DBport, DBuser, DBpasswd, DBdatabase)
 
-npcs = db.fetch_npcs(cnxn)
+npcs = db.fetch_npcs()
 log("NPCs loaded: " + str(len(npcs)), "info")
 
 # Deepcopy npcs fetched from a database into a master template
@@ -108,7 +108,7 @@ npcsTemplate = deepcopy(npcs)
 env = db.fetch_env_vars()
 log("Environment Actors loaded: " + str(len(env)), "info")
 
-itemsDB = db.fetch_all_items(cnxn)
+itemsDB = db.fetch_all_items()
 log("Items loaded: " + str(len(itemsDB)), "info")
 
 # Put some items in the world for testing and debugging

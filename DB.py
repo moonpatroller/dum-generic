@@ -1,16 +1,45 @@
-import pymysql
+# import pymysql
+import sqlite3
+import time
+
+
+def dict_factory(cursor, row):
+    d = {}
+    for idx, col in enumerate(cursor.description):
+        d[col[0]] = row[idx]
+    return d
 
 
 class DB:
-    def __init__(self, host, port, user, passwd, db):
-        self.db_conn = pymysql.connect(host=host, port=port, user=user, passwd=passwd, db=db)
+    def __init__(self, filename): #host, port, user, passwd, db):
+        # self.db_conn = pymysql.connect(host=host, port=port, user=user, passwd=passwd, db=db)
+        try:
+            self.db_conn = sqlite3.connect(filename)
+            self.db_conn.row_factory = dict_factory
+            print('Checking if db is populated with npcs')
+            self.fetch_npcs()
+            print('Found npcs')
+        except:
+            print('No npcs found, re-populating db')
+            # self.db_conn.close()
+            # self.db_conn = sqlite3.connect(filename)
+            # print(1)
+            query = open('database-dump.sql', 'r').read()
+            # print(2)
+            self.db_conn.executescript(query)
+            self.db_conn.commit()
+            # print(3)
+            # self.db_conn.commit()
+            # self.db_conn.close()
 
 
     def fetch_npcs(self):
-        db_cursor = self.db_conn.cursor(pymysql.cursors.DictCursor)
-        db_cursor.execute('SELECT * FROM tbl_NPC;')
-        db_response = cursor.fetchall()
-        db_cursor.close()
+        db_cursor = self.db_conn.cursor()
+        try:
+            db_cursor.execute('SELECT * FROM tbl_NPC;')
+            db_response = db_cursor.fetchall()
+        finally:
+            db_cursor.close()
 
         npcs = {}
 
@@ -18,6 +47,7 @@ class DB:
             for dict_row in db_response:
                 seconds = int(time.time())
                 dict_row['timeTalked'] = seconds
+                dict_row['talkDelay'] = 0
                 dict_row['lastCombatAction'] = seconds
 
                 dict_row['vocabulary'] = dict_row['vocabulary'].split('|')
@@ -35,28 +65,28 @@ class DB:
     def fetch_env_vars(self):
         db_cursor = self.db_conn.cursor()
         db_cursor.execute('SELECT * FROM tbl_ENV;')
-        db_response = cursor.fetchall()
+        db_response = db_cursor.fetchall()
         db_cursor.close()
 
         env = {}
 
         for en in db_response:
-            env[en[0]] = {
-            'name': en[1],
-            'room': en[2],
-            'vocabulary': en[3].split('|'),
-            'talkDelay': en[4],
-            'timeTalked': int(time.time()),
-            'lastSaid': 0,
-        }
+            env[en['id']] = {
+                'name': en['name'],
+                'room': en['room'],
+                'vocabulary': en['vocabulary'].split('|'),
+                'talkDelay': en['delay'],
+                'timeTalked': int(time.time()),
+                'lastSaid': 0,
+            }
 
         return env
 
 
     def fetch_all_items(self):
-        db_cursor = self.db_conn.cursor(pymysql.cursors.DictCursor)
+        db_cursor = self.db_conn.cursor()
         db_cursor.execute("SELECT * FROM tbl_Items;")
-        db_response = cursor.fetchall()
+        db_response = db_cursor.fetchall()
         db_cursor.close()
 
         item_dict = {}
@@ -72,7 +102,7 @@ class DB:
     def fetch_player_name(self, name):
         db_cursor = self.db_conn.cursor()
         db_cursor.execute("SELECT name FROM tbl_Players WHERE name = %s ;", (name, ))
-        row = cursor.fetchone()
+        row = db_cursor.fetchone()
         db_cursor.close()
         return row
 

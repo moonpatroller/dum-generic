@@ -27,7 +27,7 @@ Any environment capable of running Python3 + MySQL will do. My own development e
 Simplified steps to get things up and running are as follows. Somewhere down my TODO list is asome sort of an automated batch, which would install all the prerequisites, set up the database etc. I'm always happy to help if you need a hand or get stuck at any point.
 
 1. Install python3
-2. Install and configure MySQL instance. 
+2. Install and configure MySQL instance  (Or SQLite https://www.sqlite.org/download.html). 
 3. Use `database-dump.sql` to import the example database into your instance
 4. Create a dedicated mysql user and grant him permissions to access dum database remotely.
 5. Configure database connection details in the following section in `simplemud-generic.py`:
