@@ -21,16 +21,9 @@ class DB:
             print('Found npcs')
         except:
             print('No npcs found, re-populating db')
-            # self.db_conn.close()
-            # self.db_conn = sqlite3.connect(filename)
-            # print(1)
             query = open('database-dump.sql', 'r').read()
-            # print(2)
             self.db_conn.executescript(query)
             self.db_conn.commit()
-            # print(3)
-            # self.db_conn.commit()
-            # self.db_conn.close()
 
 
     def fetch_npcs(self):
