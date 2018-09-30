@@ -314,6 +314,7 @@ while True:
              "<f250><b25> Development Server 1       \n\r"
              " \n\r"
              '<f15>What is your username?\n\r')
+        )
 
         log("Client ID: " + str(id) + " has connected", "info")
 
@@ -398,6 +399,7 @@ while True:
                 mud.send_message(id, 
                     ('<f15>-------------------------------------------------\n\r'
                      "<f15>Type 'help' for a list of commands. Have fun!")
+                )
 
                 # send the new player the description of their current room
                 # print('about to send room description...')
