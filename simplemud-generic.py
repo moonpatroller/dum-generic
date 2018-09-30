@@ -483,6 +483,7 @@ while True:
             continue
 
         current_player = players[id]
+        player_room_id = current_player['room']
         # if the player hasn't given their name yet, use this first command as
         # their name and move them to the starting room.
         if current_player['name'] is None:
@@ -547,13 +548,13 @@ while True:
         elif command.lower() == 'say':
         # 'say' command
             # go through every player in the game
-            for (pid, pl) in get_players_in_room(current_player['room']):
+            for (pid, pl) in get_players_in_room(player_room_id):
                 # send them a message telling them what the player said
                 mud.send_message(pid, '<f32>{}<r> says: <f159>{}'.format(current_player['name'], params))
         elif command.lower() == 'look':
         # 'look' command
             # store the player's current room
-            rm = rooms[current_player['room']]
+            rm = rooms[player_room_id]
 
             # send the player back the description of their current room
             mud.send_message(id, "<f42>" + rm['description'])
@@ -561,26 +562,25 @@ while True:
             # Get name of every player in the game
             # if they're in the same room as the player and they have a name to be shown
             playershere = (
-                [p['name'] for (pid, p) in get_players_in_room(current_player['room']) 
+                [p['name'] for (pid, p) in get_players_in_room(player_room_id) 
                  and p['name'] is not None
                  and p['name'] != current_player['name']
                 ]
                 +
                 ##### Show corpses in the room
                 [corpse['name'] for (corpse_id, corpse) in corpses.items()
-                 if corpse['room'] == current_player['room']
+                 if corpse['room'] == player_room_id
                 ]
                 +
                 ##### Show NPCs in the room #####
                 [npc['name'] for (npc_id, npc) in npcs.items()
-                 if npc['room'] == current_player['room']
+                 if npc['room'] == player_room_id
                 ]
             )
 
             itemshere = []
 
             ##### Show items in the room
-            player_room_id = current_player['room']
             for item_record in itemsInWorld.get(player_room_id, []):
                 real_item = itemsDB[item_record['id']]
                 itemshere.append(real_item['article'] + ' ' + real_item['name'])
@@ -615,7 +615,7 @@ while True:
                             targetFound = True
                             victimId = pid
                             attackerId = id
-                            if pl['room'] == current_player['room']:
+                            if pl['room'] == player_room_id:
                                 fights[len(fights)] = { 
                                   's1': current_player['name'], 
                                   's2': target, 
@@ -636,10 +636,10 @@ while True:
                                 victimId = nid
                                 attackerId = id
                                 # print('found target npc')
-                                if npc['room'] == current_player['room'] and targetFound == False:
+                                if npc['room'] == player_room_id and targetFound == False:
                                     targetFound = True
                                     # print('target found!')
-                                    if current_player['room'] == npc['room']:
+                                    if player_room_id == npc['room']:
                                         fights[len(fights)] = {
                                             's1': current_player['name'], 
                                             's2': nid, 
@@ -675,12 +675,12 @@ while True:
             ex = params.lower()
 
             # store the player's current room
-            rm = rooms[current_player['room']]
+            rm = rooms[player_room_id]
 
             # if the specified exit is found in the room's exits list
             if ex in rm['exits']:
                 # go through all the players in the game
-                for (pid, pl) in get_players_in_room(current_player['room']):
+                for (pid, pl) in get_players_in_room(player_room_id):
                     # if player is in the same room and isn't the player
                     # sending the command
                     if pid != id:
@@ -690,10 +690,11 @@ while True:
 
                 # update the player's current room to the one the exit leads to
                 current_player['room'] = rm['exits'][ex]
-                rm = rooms[current_player['room']]
+                player_room_id = current_player['room']
+                rm = rooms[player_room_id]
 
                 # go through all the players in the game
-                for (pid, pl) in get_players_in_room(current_player['room']):
+                for (pid, pl) in get_players_in_room(player_room_id):
                     # if player is in the same (new) room and isn't the player
                     # sending the command
                     if pid != id:
@@ -704,7 +705,7 @@ while True:
 
                 # send the player a message telling them where they are now
                 #mud.send_message(id, 'You arrive at {}'.format(players[id]['room']))
-                mud.send_message(id, 'You arrive at <f106>{}'.format(rooms[current_player['room']]['name']))
+                mud.send_message(id, 'You arrive at <f106>{}'.format(rooms[player_room_id]['name']))
             else:
             # the specified exit wasn't found in the current room
                 # send back an 'unknown exit' message
@@ -749,7 +750,6 @@ while True:
                         break
 
                 # Create item on the floor in the same room as the player
-                player_room_id = current_player['room']
                 itemsInWorld[player_room_id] = itemsInWorld.get(player_room_id, []).append({
                   'id': itemID, 
                   'room': player_room_id, 
@@ -769,7 +769,6 @@ while True:
 
             itemPickedUp = False
             item_id = None
-            player_room_id = current_player['room']
             items_in_player_room = itemsInWorld.get(player_room_id, [])
             for item_record in items_in_player_room:
                 if itemsDB[item_record['id']]['name'].lower() == str(params).lower():
