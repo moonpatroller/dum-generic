@@ -480,13 +480,14 @@ while True:
         if id not in players:
             continue
 
+        current_player = players[id]
         # if the player hasn't given their name yet, use this first command as
         # their name and move them to the starting room.
-        if players[id]['name'] is None:
+        if current_player['name'] is None:
             row = db.fetch_player_name(command)
 
             if row != None:
-                players[id]['name'] = row[0]
+                current_player['name'] = row[0]
 
                 log("Client ID: " + str(id) + " has requested existing user (" + command + ")", "info")
                 mud.send_message(id, 'Hi <u><f32>' + command + '<r>!')
@@ -495,41 +496,27 @@ while True:
                 mud.send_message(id, '<f202>User <f32>' + command + '<r> was not found!')
                 log("Client ID: " + str(id) + " has requested non existent user (" + command + ")", "info")
 
-        elif players[id]['name'] is not None and players[id]['authenticated'] is None:
+        elif current_player['name'] is not None and current_player['authenticated'] is None:
 
-            p = db.fetch_player(name, command)
+            current_player = db.fetch_player(name, command)
 
-            if p:
-                p['authenticated'] = True
-                players[id] = p
+            if current_player:
+                current_player['authenticated'] = True
+                players[id] = current_player
 
-                log("Client ID: " + str(id) + " has successfully authenticated user " + players[id]['name'], "info")
-
-                # Debug - print data extracted from DB onto console
-                #print('Loaded player ' + players[id]['name'] + 'room: ' \
-                #    + players[id]['room'] + 'lvl: ' \
-                #    + str(players[id]['lvl']) + 'exp: ' \
-                #    + str(players[id]['exp']) + 'str: ' \
-                #    + str(players[id]['str']) + 'per: ' \
-                #    + str(players[id]['per']) + 'endu: ' \
-                #    + str(players[id]['endu']) + 'cha: ' \
-                #    + str(players[id]['cha']) + 'int: ' \
-                #    + str(players[id]['int']) + 'agi: ' \
-                #    + str(players[id]['agi']) + 'luc: ' \
-                #    + str(players[id]['luc']) + 'cred: ' \
-                #    + str(players[id]['cred']))
+                log("Client ID: " + str(id) + " has successfully authenticated user " + current_player['name'], "info")
 
                 # go through all the players in the game
                 for (pid, pl) in players.items():
                      # send each player a message to tell them about the new player
                      # print("player pid: " + players[pid]["room"] + ", player id: " + players[id]["room"])
                     if pl['authenticated'] is not None \
-                        and pl['room'] == players[id]['room'] \
-                        and pl['name'] != players[id]['name']:
+                        and pl['room'] == current_player['room'] \
+                        and pl['name'] != current_player['name']:
                         mud.send_message(pid, '{} has materialised out of thin air nearby.'.format(p['name']))
 
                 # send the new player a welcome message
-                mud.send_message(id, '<f15>Welcome to the game, {}. '.format(players[id]['name']))
+                mud.send_message(id, '<f15>Welcome to the game, {}. '.format(current_player['name']))
                 mud.send_message(id, '<f15>-------------------------------------------------')
                 mud.send_message(id, "<f15>Type 'help' for a list of commands. Have fun!")
 
@@ -559,13 +546,13 @@ while True:
             # go through every player in the game
             for (pid, pl) in players.items():
                 # if they're in the same room as the player
-                if pl['room'] == players[id]['room']:
+                if pl['room'] == current_player['room']:
                     # send them a message telling them what the player said
-                    mud.send_message(pid, '<f32>{}<r> says: <f159>{}'.format(players[id]['name'], params))
+                    mud.send_message(pid, '<f32>{}<r> says: <f159>{}'.format(current_player['name'], params))
         elif command.lower() == 'look':
         # 'look' command
             # store the player's current room
-            rm = rooms[players[id]['room']]
+            rm = rooms[current_player['room']]
 
             # send the player back the description of their current room
             mud.send_message(id, "<f42>" + rm['description'])
@@ -574,26 +561,26 @@ while True:
             # if they're in the same room as the player and they have a name to be shown
             playershere = (
                 [p['name'] for (pid, p) in players.items() 
-                 if p['room'] == players[id]['room']
+                 if p['room'] == current_player['room']
                  and p['name'] is not None
-                 and p['name'] != players[id]['name']
+                 and p['name'] != current_player['name']
                 ]
                 +
                 ##### Show corpses in the room
                 [corpse['name'] for (corpse_id, corpse) in corpses.items()
-                 if corpse['room'] == players[id]['room']
+                 if corpse['room'] == current_player['room']
                 ]
                 +
                 ##### Show NPCs in the room #####
                 [npc['name'] for (npc_id, npc) in npcs.items()
-                 if npc['room'] == players[id]['room']
+                 if npc['room'] == current_player['room']
                 ]
             )
 
             itemshere = []
 
             ##### Show items in the room
-            player_room_id = players[id]['room']
+            player_room_id = current_player['room']
             for item_record in itemsInWorld.get(player_room_id, []):
                 real_item = itemsDB[item_record['id']]
                 itemshere.append(real_item['article'] + ' ' + real_item['name'])
@@ -617,20 +604,20 @@ while True:
             targetFound = False
 
             for (fighter_id, fighter) in fights.items():
-                if fighter['s1'] == players[id]['name']:
+                if fighter['s1'] == current_player['name']:
                     isAlreadyAttacking = True
                     currentTarget = fighter['s2']
 
             if isAlreadyAttacking == False:
-                if players[id]['name'].lower() != target.lower():
+                if current_player['name'].lower() != target.lower():
                     for (pid, pl) in players.items():
                         if pl['name'].lower() == target.lower():
                             targetFound = True
                             victimId = pid
                             attackerId = id
-                            if pl['room'] == players[id]['room']:
+                            if pl['room'] == current_player['room']:
                                 fights[len(fights)] = { 
-                                  's1': players[id]['name'], 
+                                  's1': current_player['name'], 
                                   's2': target, 
                                   's1id': attackerId, 
                                   's2id': victimId, 
@@ -649,12 +636,12 @@ while True:
                                 victimId = nid
                                 attackerId = id
                                 # print('found target npc')
-                                if npc['room'] == players[id]['room'] and targetFound == False:
+                                if npc['room'] == current_player['room'] and targetFound == False:
                                     targetFound = True
                                     # print('target found!')
-                                    if players[id]['room'] == npc['room']:
+                                    if current_player['room'] == npc['room']:
                                         fights[len(fights)] = {
-                                            's1': players[id]['name'], 
+                                            's1': current_player['name'], 
                                             's2': nid, 
                                             's1id': attackerId, 
                                             's2id': victimId, 
@@ -688,7 +675,7 @@ while True:
             ex = params.lower()
 
             # store the player's current room
-            rm = rooms[players[id]['room']]
+            rm = rooms[current_player['room']]
 
             # if the specified exit is found in the room's exits list
             if ex in rm['exits']:
@@ -696,28 +683,28 @@ while True:
                 for (pid, pl) in players.items():
                     # if player is in the same room and isn't the player
                     # sending the command
-                    if pl['room'] == players[id]['room'] and pid != id:
+                    if pl['room'] == current_player['room'] and pid != id:
                         # send them a message telling them that the player
                         # left the room
-                        mud.send_message(pid, '<f32>{}<r> left via exit {}'.format(players[id]['name'], ex))
+                        mud.send_message(pid, '<f32>{}<r> left via exit {}'.format(current_player['name'], ex))
 
                 # update the player's current room to the one the exit leads to
-                players[id]['room'] = rm['exits'][ex]
-                rm = rooms[players[id]['room']]
+                current_player['room'] = rm['exits'][ex]
+                rm = rooms[current_player['room']]
 
                 # go through all the players in the game
                 for (pid, pl) in players.items():
                     # if player is in the same (new) room and isn't the player
                     # sending the command
-                    if pl['room'] == players[id]['room'] and pid != id:
+                    if pl['room'] == current_player['room'] and pid != id:
                         # send them a message telling them that the player
                         # entered the room
                         # mud.send_message(pid, '{} arrived via exit {}|'.format(players[id]['name'], ex))
-                        mud.send_message(pid, '<f32>{}<r> has arrived.'.format(players[id]['name'], ex))
+                        mud.send_message(pid, '<f32>{}<r> has arrived.'.format(current_player['name'], ex))
 
                 # send the player a message telling them where they are now
                 #mud.send_message(id, 'You arrive at {}'.format(players[id]['room']))
-                mud.send_message(id, 'You arrive at <f106>{}'.format(rooms[players[id]['room']]['name']))
+                mud.send_message(id, 'You arrive at <f106>{}'.format(rooms[current_player['room']]['name']))
             else:
             # the specified exit wasn't found in the current room
                 # send back an 'unknown exit' message
@@ -727,9 +714,9 @@ while True:
         # 'check' command
             if params.lower() == 'inventory' or params.lower() == 'inv':
                 mud.send_message(id, 'You check your inventory.')
-                if len(players[id]['inv']) > 0:
+                if len(current_player['inv']) > 0:
                     mud.send_message(id, 'You are currently in possession of: ')
-                    for i in players[id]['inv']:
+                    for i in current_player['inv']:
                         mud.send_message(id, '<b234>' + itemsDB[int(i)]['name'])
                 else:
                     mud.send_message(id, 'You haven`t got any items on you.')
@@ -750,19 +737,19 @@ while True:
 
             # Check if item is in player's inventory
             itemInInventory = False
-            for item in players[id]['inv']:
+            for item in current_player['inv']:
                 if int(item) == itemID:
                     itemInInventory = True
             
             if itemID is not None and itemInInventory:
-                for i in players[id]['inv']:
+                for i in current_player['inv']:
                     if int(i) == itemID:
                         # Remove first matching item from inventory
-                        players[id]['inv'].remove(i)
+                        current_player['inv'].remove(i)
                         break
 
                 # Create item on the floor in the same room as the player
-                player_room_id = players[id]['room']
+                player_room_id = current_player['room']
                 itemsInWorld[player_room_id] = itemsInWorld.get(player_room_id, []).append({
                   'id': itemID, 
                   'room': player_room_id, 
@@ -788,12 +775,12 @@ while True:
 
             itemPickedUp = False
             item_id = None
-            player_room_id = players[id]['room']
+            player_room_id = current_player['room']
             items_in_player_room = itemsInWorld.get(player_room_id, [])
             for item_record in items_in_player_room:
                 if itemsDB[item_record['id']]['name'].lower() == str(params).lower():
                     item_id = item_record['id']
-                    players[id]['inv'].append(str(item_id))
+                    current_player['inv'].append(str(item_id))
                     items_in_player_room.remove(item_record)
                     itemPickedUp = True
                     break
