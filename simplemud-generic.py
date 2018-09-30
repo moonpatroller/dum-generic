@@ -46,6 +46,10 @@ def create_corpse(body):
     }
 
 
+def get_players_in_room(room_id):
+    return ((pid, pl) for (pid, pl) in players.items() if pl['room'] != room_id)
+
+
 log("", "Server Boot")
 
 
@@ -192,10 +196,8 @@ while True:
                     if fight['s1id'] != pid and fight['s2id'] != pid
                 }
 
-                for (pid2, pl_2) in players.items():
-                    if pl_2['authenticated'] is not None \
-                        and pl_2['room'] == pl['lastRoom'] \
-                        and pl_2['name'] != pl['name']:
+                for (pid2, pl_2) in get_players_in_room(pl['lastRoom']):
+                    if pl_2['authenticated'] is not None and pl_2['name'] != pl['name']:
                         mud.send_message(pid2, '<u><f32>{}<r> <f124>has been killed.'.format(pl['name']))
                 pl['lastRoom'] = None
                 mud.send_message(pid, '<b88><f158>Oh dear! You have died!')
@@ -296,15 +298,14 @@ while True:
     for (nid, npc) in npcs.items():
         # Check if any player is in the same room, then send a random message to them
         if now > npc['timeTalked'] + npc['talkDelay']:
-            for (pid, pl) in players.items():
-                if npc['room'] == pl['room']:
-                    if len(npc['vocabulary']) > 1:
-                        msg = '<f21><u>' + npc['name'] + '<r> says: <f86>' + random.choice(npc['vocabulary'])
-                        mud.send_message(pid, msg)
-                    else:
-                        #mud.send_message(pid, npc['vocabulary'][0])
-                        msg = '<f21><u>' + npc['name'] + '<r> says: <f86>' + npc['vocabulary'][0]
-                        mud.send_message(pid, msg)
+            for (pid, pl) in get_players_in_room(npc['room']):
+                if len(npc['vocabulary']) > 1:
+                    msg = '<f21><u>' + npc['name'] + '<r> says: <f86>' + random.choice(npc['vocabulary'])
+                    mud.send_message(pid, msg)
+                else:
+                    #mud.send_message(pid, npc['vocabulary'][0])
+                    msg = '<f21><u>' + npc['name'] + '<r> says: <f86>' + npc['vocabulary'][0]
+                    mud.send_message(pid, msg)
             npc['timeTalked'] =  now
         # Iterate through fights and see if anyone is attacking an NPC - 
         # if so, attack him too if not in combat (TODO: and isAggressive = true)
@@ -353,8 +354,8 @@ while True:
 
             corpses.append(create_corpse(npc))
 
-            for (pid, pl) in players.items():
-                if pl['authenticated'] is not None and pl['room'] == npc['room']:
+            for (pid, pl) in get_players_in_room(npc['room']):
+                if pl['authenticated'] is not None:
                     mud.send_message(pid, "<f32><u>{}<r> <f88>has been killed.".format(npc['name']))
             npc['room'] = None
             npc['hp'] = npcsTemplate[nid]['hp']
@@ -448,12 +449,11 @@ while True:
         log("Client ID:" + str(id) + " has disconnected (" + str(players[id]['name']) + ")", "info")
         
         # go through all the players in the game
-        for (pid, pl) in players.items():
+        for (pid, pl) in get_players_in_room(players[id]['room']):
             # send each player a message to tell them about the diconnected
             # player if they are in the same room
             if (players[pi]['authenticated'] is not None 
                      and pl['authenticated'] is not None
-                     and pl['room'] == players[id]['room'] 
                      and pl['name'] != players[id]['name']):
                 mud.send_message(pid, "<f32><u>{}<r>'s body has vanished.".format(players[id]['name']))
 
@@ -507,12 +507,10 @@ while True:
                 log("Client ID: " + str(id) + " has successfully authenticated user " + current_player['name'], "info")
 
                 # go through all the players in the game
-                for (pid, pl) in players.items():
+                for (pid, pl) in get_players_in_room(current_player['room']):
                      # send each player a message to tell them about the new player
                      # print("player pid: " + players[pid]["room"] + ", player id: " + players[id]["room"])
-                    if pl['authenticated'] is not None \
-                        and pl['room'] == current_player['room'] \
-                        and pl['name'] != current_player['name']:
+                    if pl['authenticated'] is not None and pl['name'] != current_player['name']:
                         mud.send_message(pid, '{} has materialised out of thin air nearby.'.format(p['name']))
 
                 # send the new player a welcome message
@@ -544,11 +542,9 @@ while True:
         elif command.lower() == 'say':
         # 'say' command
             # go through every player in the game
-            for (pid, pl) in players.items():
-                # if they're in the same room as the player
-                if pl['room'] == current_player['room']:
-                    # send them a message telling them what the player said
-                    mud.send_message(pid, '<f32>{}<r> says: <f159>{}'.format(current_player['name'], params))
+            for (pid, pl) in get_players_in_room(current_player['room']):
+                # send them a message telling them what the player said
+                mud.send_message(pid, '<f32>{}<r> says: <f159>{}'.format(current_player['name'], params))
         elif command.lower() == 'look':
         # 'look' command
             # store the player's current room
@@ -560,8 +556,7 @@ while True:
             # Get name of every player in the game
             # if they're in the same room as the player and they have a name to be shown
             playershere = (
-                [p['name'] for (pid, p) in players.items() 
-                 if p['room'] == current_player['room']
+                [p['name'] for (pid, p) in get_players_in_room(current_player['room']) 
                  and p['name'] is not None
                  and p['name'] != current_player['name']
                 ]
@@ -680,10 +675,10 @@ while True:
             # if the specified exit is found in the room's exits list
             if ex in rm['exits']:
                 # go through all the players in the game
-                for (pid, pl) in players.items():
+                for (pid, pl) in get_players_in_room(current_player['room']):
                     # if player is in the same room and isn't the player
                     # sending the command
-                    if pl['room'] == current_player['room'] and pid != id:
+                    if pid != id:
                         # send them a message telling them that the player
                         # left the room
                         mud.send_message(pid, '<f32>{}<r> left via exit {}'.format(current_player['name'], ex))
@@ -693,10 +688,10 @@ while True:
                 rm = rooms[current_player['room']]
 
                 # go through all the players in the game
-                for (pid, pl) in players.items():
+                for (pid, pl) in get_players_in_room(current_player['room']):
                     # if player is in the same (new) room and isn't the player
                     # sending the command
-                    if pl['room'] == current_player['room'] and pid != id:
+                    if pid != id:
                         # send them a message telling them that the player
                         # entered the room
                         # mud.send_message(pid, '{} arrived via exit {}|'.format(players[id]['name'], ex))
