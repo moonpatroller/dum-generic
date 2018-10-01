@@ -68,47 +68,30 @@ with open("rooms.json", "r") as read_file:
 
 log("Rooms loaded: " + str(len(rooms)), "info")
 
-# Declare NPCs master (template) tuple
-npcsTemplate = {}
-
 corpses = {}
-env = {}
 fights = {}
-itemsDB = {}
-itemsInWorld = {}
-npcs = {}
 players = {}
 
 # Declare number of seconds to elapse between State Saves
 # A State Save takes values held in memory and updates the database
 # at set intervals to achieve player state persistence
 stateSaveInterval = 10
-log("State Save interval: " + str(stateSaveInterval) + " seconds", "info")
-
-# Set last state save to 'now' on server boot
 lastStateSave = int(time.time())
+log('State save interval: {0}, last stats save is now: {1}.'.format(stateSaveInterval, lastStateSave), "info")
 
-# Database connection details
-# DBhost = 'localhost'
-# DBport = 3306
-# DBuser = '<user>'
-# DBpasswd = '<password>'
-# DBdatabase = '<database>'
-
-log("Connecting to database", "info")
-db = DB('sample.db') # DBhost, DBport, DBuser, DBpasswd, DBdatabase)
+db = DB('sample.db')
 
 npcs = db.fetch_npcs()
-log("NPCs loaded: " + str(len(npcs)), "info")
+log('Npcs loaded: {0}'.format(npcs), "info")
 
-# Deepcopy npcs fetched from a database into a master template
+# Save npcs as a master template
 npcsTemplate = deepcopy(npcs)
 
 env = db.fetch_env_vars()
-log("Environment Actors loaded: " + str(len(env)), "info")
+log('Environment actors loaded: {0}'.format(env), "info")
 
 itemsDB = db.fetch_all_items()
-log("Items loaded: " + str(len(itemsDB)), "info")
+log('Items loaded: {0}'.format(itemsDB), "info")
 
 # Put some items in the world for testing and debugging
 itemsInWorld['$rid=1$'] = [
