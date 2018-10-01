@@ -145,7 +145,7 @@ while True:
     # Handle Player Deaths
     for (pid, pl) in players.items():
         if pl['authenticated']:
-            if pl['hp'] <= 0:
+            if pl.get('hp', 0) <= 0:
                 # Create player's corpse in the room
                 corpses.append(create_corpse(pl))
 
@@ -287,7 +287,7 @@ while True:
             'imp_lleg': None,
             'imp_rleg': None,
             'imp_feet': None,
-            'hp': None,
+            'hp': 100,
             'charge': None,
             'isInCombat': None,
             'lastCombatAction': None,
@@ -365,10 +365,13 @@ while True:
         # if the player hasn't given their name yet, use this first command as
         # their name and move them to the starting room.
         if current_player['name'] is None:
-            row = db.fetch_player_name(command)
+            current_player['name'] = command
 
-            if row != None:
-                current_player['name'] = row[0]
+            log('trying to fetch {0}'.format(command), 'info')
+            row = db.fetch_player(command)
+            log('result {0}'.format(row), 'info')
+
+            if row is not None:
 
                 log("Client ID: " + str(id) + " has requested existing user (" + command + ")", "info")
                 mud.send_message(id, 'Hi <u><f32>' + command + '<r>!')
@@ -379,35 +382,37 @@ while True:
 
         elif current_player['name'] is not None and current_player['authenticated'] is None:
 
-            current_player = db.fetch_player(name, command)
+            log('fetching player by name and password {0} {1}'.format(current_player['name'], command), 'info')
+            fetched_player = db.fetch_player_by_name_and_password(current_player['name'], command)
+            log('got player {0}'.format(fetched_player), 'info')
 
-            if current_player:
-                current_player['authenticated'] = True
-                players[id] = current_player
+            if not fetched_player:
+                log('saving player password {0} {1}'.format(current_player['name'], command), 'info')
+                current_player['pwd'] = command
+                count = db.save_player(current_player)
+                log('saved player, updated rows = {0}'.format(count), 'info')
+    
+            current_player['authenticated'] = True
+            current_player['room'] = '$rid=0$'
+            log('current_player {0}'.format(current_player), 'info')
+            players[id] = current_player
+            log('players {0}'.format(players), 'info')
 
-                log("Client ID: " + str(id) + " has successfully authenticated user " + current_player['name'], "info")
+            log("Client ID: " + str(id) + " has successfully authenticated user " + current_player['name'], "info")
 
-                # go through all the players in the game
-                for (pid, pl) in get_players_in_room(current_player['room']):
-                     # send each player a message to tell them about the new player
-                     # print("player pid: " + players[pid]["room"] + ", player id: " + players[id]["room"])
-                    if pl['authenticated'] is not None and pl['name'] != current_player['name']:
-                        mud.send_message(pid, '{} has materialised out of thin air nearby.'.format(p['name']))
+            # go through all the players in the game
+            for (pid, pl) in get_players_in_room(current_player['room']):
+                 # send each player a message to tell them about the new player
+                 # print("player pid: " + players[pid]["room"] + ", player id: " + players[id]["room"])
+                if pl['authenticated'] is not None and pl['name'] != current_player['name']:
+                    mud.send_message(pid, '{} has materialised out of thin air nearby.'.format(p['name']))
 
-                # send the new player a welcome message
-                mud.send_message(id, '<f15>Welcome to the game, {}. '.format(current_player['name']))
-                mud.send_message(id, 
-                    ('<f15>-------------------------------------------------\n\r'
-                     "<f15>Type 'help' for a list of commands. Have fun!")
-                )
-
-                # send the new player the description of their current room
-                # print('about to send room description...')
-                # print('Description: ' + rooms[players[id]['room']]['description'])
-                # mud.send_message(id, rooms[players[id]['room']]['description'])
-            else:
-                mud.send_message(id, '<f202>Password incorrect!')
-                log("Client ID: " + str(id) + " has failed authentication", "info")
+            # send the new player a welcome message
+            mud.send_message(id, '<f15>Welcome to the game, {}. '.format(current_player['name']))
+            mud.send_message(id, 
+                ('<f15>-------------------------------------------------\n\r'
+                 "<f15>Type 'help' for a list of commands. Have fun!")
+            )
 
         elif command.lower() == 'help':
         # 'help' command
@@ -440,9 +445,10 @@ while True:
 
             # Get name of every player in the game
             # if they're in the same room as the player and they have a name to be shown
+
             playershere = (
                 [p['name'] for (pid, p) in get_players_in_room(player_room_id) 
-                 and p['name'] is not None
+                 if p['name'] is not None
                  and p['name'] != current_player['name']
                 ]
                 +

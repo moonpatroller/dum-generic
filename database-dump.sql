@@ -173,10 +173,6 @@ CREATE TABLE `tbl_Players` (
   `isInCombat` tinyint(1) NOT NULL
 );
 
---
--- Dumping data for table `tbl_Players`
---
-
 INSERT INTO `tbl_Players` VALUES 
 ('Player1','$rid=1$',1,0,6,4,8,7,5,5,6,1332,'200001,200001,200002','Password',0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,4,100,0),
 ('Player2','$rid=3$',1,0,6,4,8,7,5,5,6,1332,'200001,200001,200002,200001','Password',0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,4,100,0),

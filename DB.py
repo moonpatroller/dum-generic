@@ -92,15 +92,15 @@ class DB:
         return item_dict
 
 
-    def fetch_player_name(self, name):
+    def fetch_player_by_name_and_password(self, name, password):
         db_cursor = self.db_conn.cursor()
-        db_cursor.execute("SELECT name FROM tbl_Players WHERE name = ? ;", (name, ))
+        db_cursor.execute("SELECT name FROM tbl_Players WHERE name = ? and pwd = ? ;", (name, password))
         row = db_cursor.fetchone()
         db_cursor.close()
         return row
 
 
-    def fetch_player(self, name, password):
+    def fetch_player(self, name):
         db_cursor = self.db_conn.cursor()
         db_cursor.execute(
             '''
@@ -108,9 +108,8 @@ class DB:
                 FROM tbl_Players 
                 WHERE 
                     name = ?
-                    AND password = ?
                 ;
-            ''', name, password)
+            ''', (name, ))
         db_response = db_cursor.fetchone()
         db_cursor.close()
 
@@ -130,6 +129,7 @@ class DB:
                 'luc' : db_response[10],
                 'cred' : db_response[11],
                 'inv' : db_response[12].split(',').filter(lambda it: it not in ('', ' ')),
+                'pwd': db_response[13],
                 'clo_head' : db_response[14],
                 'clo_larm' : db_response[15],
                 'clo_rarm' : db_response[16],
@@ -159,20 +159,21 @@ class DB:
 
     def save_player(self, p):
         db_cursor = self.db_conn.cursor()
-        db_cursor.execute('''
+        query = '''
             UPDATE tbl_Players 
             SET 
-                room = {room},
+                room = '{room}',
                 exp  = {exp},
                 str  = {str},
                 per  = {per},
                 endu = {endu},
                 cha  = {cha},
-                int  = {int},
+                inte  = {int},
                 agi  = {agi},
                 luc  = {luc},
                 cred = {cred},
                 inv  = '{inv}',
+                pwd  = '{pwd}',
 
                 clo_head  = {clo_head},
                 clo_larm  = {clo_larm},
@@ -199,51 +200,55 @@ class DB:
                 lvl = {lvl} 
             WHERE name = '{name}';
             '''.format(
-                room = p["room"], 
-                exp  = p["exp"], 
-                str  = p["str"], 
-                per  = p["per"], 
-                endu = p["endu"], 
-                cha  = p["cha"], 
-                int  = p["int"], 
-                agi  = p["agi"], 
-                luc  = p["luc"], 
-                cred = p["cred"], 
-                inv  = ",".join(p["inv"]),
+                room = p["room"] or '', 
+                exp  = p["exp"] or 0, 
+                str  = p["str"] or 0, 
+                per  = p["per"] or 0,
+                endu = p["endu"] or 0, 
+                cha  = p["cha"] or 0, 
+                int  = p["int"] or 0, 
+                agi  = p["agi"] or 0, 
+                luc  = p["luc"] or 0, 
+                cred = p["cred"] or 0, 
+                inv  = ",".join(p["inv"] or []),
+                pwd  = p["pwd"],
 
-                clo_head  = p["clo_head"], 
-                clo_larm  = p["clo_larm"], 
-                clo_rarm  = p["clo_rarm"], 
-                clo_lhand = p["clo_lhand"], 
-                clo_rhand = p["clo_rhand"], 
-                clo_chest = p["clo_chest"], 
-                clo_lleg  = p["clo_lleg"], 
-                clo_rleg  = p["clo_rleg"], 
+                clo_head  = p["clo_head"] or 0, 
+                clo_larm  = p["clo_larm"] or 0, 
+                clo_rarm  = p["clo_rarm"] or 0, 
+                clo_lhand = p["clo_lhand"] or 0, 
+                clo_rhand = p["clo_rhand"] or 0, 
+                clo_chest = p["clo_chest"] or 0, 
+                clo_lleg  = p["clo_lleg"] or 0, 
+                clo_rleg  = p["clo_rleg"] or 0, 
 
-                clo_feet  = p["clo_feet"], 
-                imp_head  = p["imp_head"], 
-                imp_larm  = p["imp_larm"], 
-                imp_rarm  = p["imp_rarm"], 
-                imp_lhand = p["imp_lhand"], 
-                imp_rhand = p["imp_rhand"], 
-                imp_chest = p["imp_chest"], 
-                imp_lleg  = p["imp_lleg"], 
-                imp_rleg  = p["imp_rleg"], 
-                imp_feet  = p["imp_feet"], 
+                clo_feet  = p["clo_feet"] or 0, 
+                imp_head  = p["imp_head"] or 0, 
+                imp_larm  = p["imp_larm"] or 0, 
+                imp_rarm  = p["imp_rarm"] or 0, 
+                imp_lhand = p["imp_lhand"] or 0, 
+                imp_rhand = p["imp_rhand"] or 0, 
+                imp_chest = p["imp_chest"] or 0, 
+                imp_lleg  = p["imp_lleg"] or 0, 
+                imp_rleg  = p["imp_rleg"] or 0, 
+                imp_feet  = p["imp_feet"] or 0, 
 
-                hp = p["hp"], 
-                charge = p["charge"], 
+                hp = p["hp"] or 0, 
+                charge = p["charge"] or 0, 
+                lvl = p["lvl"] or 0,
                 name = p["name"]
-            ))
-        db_cursor.close()
+            )
+        db_cursor.execute(query)
         self.db_conn.commit()
+        db_cursor.close()
+        return db_cursor.rowcount
 
 
     def save_players(self, players):
         db_cursor = self.db_conn.cursor()
         for pl in players.values():
             if pl['authenticated'] is not None:
-                save_player(db_cursor, pl)
+                self.save_player(pl)
                 self.db_conn.commit()
         db_cursor.close()
 
