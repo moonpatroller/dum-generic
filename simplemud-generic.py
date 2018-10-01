@@ -19,7 +19,6 @@ def respawn_npcs(npcs, npcsTemplate):
         if npc['whenDied'] is not None and now >= npc['whenDied'] + npc['respawn']:
             npc['whenDied'] = None
             npc['room'] = npcsTemplate[nid]['room']
-            # print("respawning " + npcs[nid]['name'])
 
 def pump_env_messages(env, players, mud, now):
     # Iterate through ENV elements and see if it's time to send a message to players in the same room as the ENV elements
@@ -294,7 +293,7 @@ while True:
             'isAttackable': None,
             'lastRoom': None,
             'corpseTTL': None,
-            }
+        }
 
         # send the new player a prompt for their name
         # mud.send_message(id, 'Connected to server!')
