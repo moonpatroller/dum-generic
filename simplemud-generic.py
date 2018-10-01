@@ -7,7 +7,7 @@ import time
 from copy import deepcopy
 
 from cmsg import cmsg
-from fights import handle_fights
+from fights import handle_fights, pump_npcs
 from functions import log
 from mudserver import MudServer
 from DB import DB
@@ -94,6 +94,7 @@ itemsDB = db.fetch_all_items()
 log('Items loaded: {0}'.format(itemsDB), "info")
 
 # Put some items in the world for testing and debugging
+itemsInWorld = {}
 itemsInWorld['$rid=1$'] = [
     { 'id': 200001, 'room': '$rid=1$', 'whenDropped': 1533133523, 'lifespan': 90000000, 'owner': 1},
     { 'id': 200002, 'room': '$rid=1$', 'whenDropped': 1533133523, 'lifespan': 90002000, 'owner': 2},
@@ -153,71 +154,7 @@ while True:
     # Handle Fights
     handle_fights(fights, players, npcs, mud, now, set_fights)
 
-    # Iterate through NPCs, check if its time to talk, then check if anyone is attacking it
-    for (nid, npc) in npcs.items():
-        # Check if any player is in the same room, then send a random message to them
-        if now > npc['timeTalked'] + npc['talkDelay']:
-            for (pid, pl) in get_players_in_room(npc['room']):
-                if len(npc['vocabulary']) > 1:
-                    msg = '<f21><u>' + npc['name'] + '<r> says: <f86>' + random.choice(npc['vocabulary'])
-                    mud.send_message(pid, msg)
-                else:
-                    #mud.send_message(pid, npc['vocabulary'][0])
-                    msg = '<f21><u>' + npc['name'] + '<r> says: <f86>' + npc['vocabulary'][0]
-                    mud.send_message(pid, msg)
-            npc['timeTalked'] =  now
-        # Iterate through fights and see if anyone is attacking an NPC - 
-        # if so, attack him too if not in combat (TODO: and isAggressive = true)
-        for fight in fights.values():
-            fs1id = fight['s1id']
-            fs2id = fight['s2id']
-            npc2 = npcs[fs2id]
-
-            if fs2id == nid and npc2['isInCombat'] == 1 and fight['s1type'] == 'pc' and fight['retaliated'] == 0:
-                # print('player is attacking npc')
-                # BETA: set las combat action to now when attacking a player
-                npc2['lastCombatAction'] = now
-                fight['retaliated'] = 1
-                npc2['isInCombat'] = 1
-                fights[len(fights)] = {
-                    's1': npc2['name'],
-                    's2': players[fs1id]['name'],
-                    's1id': nid,
-                    's2id': fs1id,
-                    's1type': 'npc',
-                    's2type': 'pc',
-                    'retaliated': 1
-                }
-            elif fs2id == nid and npc2['isInCombat'] == 1 and fight['s1type'] == 'npc' and fight['retaliated'] == 0:
-                # print('npc is attacking npc')
-                # BETA: set las combat action to now when attacking a player
-                npc2['lastCombatAction'] = now
-                fight['retaliated'] = 1
-                npc2['isInCombat'] = 1
-                fights[len(fights)] = {
-                    's1': npc2['name'],
-                    's2': players[fs1id]['name'], 
-                    's1id': nid, 
-                    's2id': fs1id, 
-                    's1type': 'npc', 
-                    's2type': 'npc', 
-                    'retaliated': 1
-                }
-        # Check if NPC is still alive, if not, remove from room and create a corpse, set isInCombat to 0, 
-        # set whenDied to now and remove any fights NPC was involved in
-        if npc['hp'] <= 0:
-            npc['isInCombat'] = 0
-            npc['lastRoom'] = npc['room']
-            npc['whenDied'] = now
-            fights = {fight_id: fight for fight_id, fight in fights.items() if fight['s1id'] != nid and fight['s2id'] != nid}
-
-            corpses.append(create_corpse(npc))
-
-            for (pid, pl) in get_players_in_room(npc['room']):
-                if pl['authenticated'] is not None:
-                    mud.send_message(pid, "<f32><u>{}<r> <f88>has been killed.".format(npc['name']))
-            npc['room'] = None
-            npc['hp'] = npcsTemplate[nid]['hp']
+    pump_npcs(fights, players, npcs, mud, now, set_fights, get_players_in_room)
 
     pump_env_messages(env, players, mud, now)
 
