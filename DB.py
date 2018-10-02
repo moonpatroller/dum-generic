@@ -158,6 +158,7 @@ class DB:
 
 
     def save_player(self, p):
+        print('save_player {0}'.format(p))
         db_cursor = self.db_conn.cursor()
         query = '''
             UPDATE tbl_Players 
@@ -210,7 +211,7 @@ class DB:
                 agi  = p["agi"] or 0, 
                 luc  = p["luc"] or 0, 
                 cred = p["cred"] or 0, 
-                inv  = ",".join(p["inv"] or []),
+                inv  = ",".join((str(x['id']) for x in p["inv"]) if p['inv'] else []),
                 pwd  = p["pwd"],
 
                 clo_head  = p["clo_head"] or 0, 
